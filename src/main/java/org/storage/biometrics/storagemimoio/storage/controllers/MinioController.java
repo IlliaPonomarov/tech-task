@@ -24,7 +24,7 @@ public class MinioController {
     public PreSignedURL initiateBucket(@PathVariable String bucketName, @PathVariable String fileName) {
         var preSignedURL = minioService.generatePresignedUrl(bucketName, fileName);
 
-        return new PreSignedURL("Bucket initiated", null);
+        return preSignedURL;
     }
 
     @PostMapping("/upload/{bucketName}")

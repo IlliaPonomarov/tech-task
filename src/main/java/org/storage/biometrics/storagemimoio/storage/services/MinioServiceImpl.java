@@ -36,12 +36,14 @@ public class MinioServiceImpl implements MinioService{
         }
 
         try {
+            int expiry = Math.max(1, Math.min(60 * 60 * 24 * 7, 10000)); // 1 second minimum, 7 days maximum
+
             var url = minioClient.getPresignedObjectUrl(
                     GetPresignedObjectUrlArgs.builder()
                             .method(Method.GET)
                             .bucket(bucketName)
                             .object(fileName)
-                            .expiry(expirationTime)
+                            .expiry(expiry)
                             .build());
 
             return new PreSignedURL(url, new Metadata(bucketName, fileName));
