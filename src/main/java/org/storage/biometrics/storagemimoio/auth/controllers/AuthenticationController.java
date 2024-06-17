@@ -52,6 +52,13 @@ public class AuthenticationController {
         return ResponseEntity.ok(registeredUser);
     }
 
+    @Operation(summary = "Authenticate a user")
+    @ApiResponses(
+            value = {
+                    @ApiResponse(responseCode = "200", description = "User authenticated successfully"),
+                    @ApiResponse(responseCode = "400", description = "Invalid input")
+            }
+    )
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> authenticate(@RequestBody LoginUserDto loginUserDto) {
         Optional<User> authenticatedUser = Optional.ofNullable(authenticationService.authenticate(loginUserDto));

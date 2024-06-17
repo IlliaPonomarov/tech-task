@@ -30,3 +30,11 @@ security:
     secret-key: ${JWT_SECRET:3cfa76ef14937c1c0ea519f8fc057a80fcd04a7420f8e8bcd0a7567c272e007b}
     expiration-time: ${JWT_EXPIRATION_TIME:86400000}
 
+
+minio:
+  url: ${MINIO_URL:http://localhost:9000}
+  access-key: ${MINIO_ACCESS_KEY:ntLUlgHiDo3kBYyUhkuf}
+  secret-key: ${MINIO_SECRET_KEY:qNKhzzmBc9B6m3TvQF0ETJMtX5AKUJzhZLRvHaSO}
+  backet-name: ${MINIO_BACKET_NAME:name}
+  expirationTime: ${MINIO_EXPIRATION_TIME:86400000}
+

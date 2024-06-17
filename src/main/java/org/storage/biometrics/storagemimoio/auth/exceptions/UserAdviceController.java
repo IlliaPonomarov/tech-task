@@ -11,11 +11,11 @@ public class UserAdviceController {
 
     @ExceptionHandler(UserAlreadyExistsException.class)
     public ErrorMessage userAlreadyExists(UserAlreadyExistsException ex) {
-        return new ErrorMessage(ex.getMessage(), new Date(), ex.getMessage());
+        return new ErrorMessage(ex.getMessage(), new Date());
     }
 
     @ExceptionHandler(UserDoesNotExistException.class)
     public ErrorMessage userDoesNotExist(UserDoesNotExistException ex) {
-        return new ErrorMessage(ex.getMessage(), new Date(), ex.getMessage());
+        return new ErrorMessage(ex.getMessage(), new Date());
     }
 }
