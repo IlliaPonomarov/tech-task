@@ -1,21 +1,30 @@
 package org.storage.biometrics.storagemimoio.storage.services;
 
 import io.minio.*;
+import io.minio.errors.*;
 import io.minio.http.Method;
+import okhttp3.OkHttpClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
-import org.storage.biometrics.storagemimoio.storage.dtos.BinaryUploadResponse;
-import org.storage.biometrics.storagemimoio.storage.dtos.Metadata;
-import org.storage.biometrics.storagemimoio.storage.dtos.InitiateUploadResponse;
+import org.storage.biometrics.storagemimoio.storage.dtos.*;
 import org.storage.biometrics.storagemimoio.storage.exceptions.ExpirationTimeException;
 import org.storage.biometrics.storagemimoio.storage.exceptions.InitiatingUploadException;
 import org.storage.biometrics.storagemimoio.storage.exceptions.MinioBucketNotFoundException;
 import org.storage.biometrics.storagemimoio.storage.exceptions.MinioUploadException;
 import org.storage.biometrics.storagemimoio.utilit.enums.BucketTypes;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -24,17 +33,19 @@ import java.util.function.Predicate;
 public class MinioServiceImpl implements MinioService{
 
     private final MinioClient minioClient;
+    private final RestTemplate restTemplate;
 
     @Value("${minio.expirationTime}")
     private int expirationTime;
 
     @Autowired
-    public MinioServiceImpl(MinioClient minioClient) {
+    public MinioServiceImpl(MinioClient minioClient, RestTemplate restTemplate) {
         this.minioClient = minioClient;
+        this.restTemplate = restTemplate;
     }
 
     @Override
-    public InitiateUploadResponse generatePresignedUrl(final String objectName) {
+    public InitiateUploadResponse generatePreSignedUploadUrl(final String objectName) {
         var bucketName = determineBucketBasedOnFileName(objectName);
 
         // expiry must be minimum 1 second to maximum 7 days
@@ -67,33 +78,68 @@ public class MinioServiceImpl implements MinioService{
     }
 
     @Override
-    public BinaryUploadResponse uploadFile(final String bucketName, final MultipartFile file) {
-        var type = file.getContentType();
+    public BinaryUploadResponse uploadFile(final String preSignedUrl, final MultipartFile file) {
         var objectName = file.getOriginalFilename();
+        try {
+            OkHttpClient client = new OkHttpClient().newBuilder().build();
+            var mediaType = okhttp3.MediaType.parse("application/octet-stream");
+            var requestBody = okhttp3.RequestBody.create(mediaType, file.getBytes());
+            var request = new okhttp3.Request.Builder()
+                    .url(preSignedUrl)
+                    .method("PUT", requestBody)
+                    .build();
 
-        try{
-            InputStream stream = file.getInputStream();
+            var response = client.newCall(request).execute();
 
+            if (!response.isSuccessful()) {
+                throw new MinioUploadException("Error while uploading file");
+            }
+
+            return new BinaryUploadResponse(objectName, determineBucketBasedOnFileName(objectName));
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    @Override
+    public InitiateDownloadResponse generatePreSignedDownloadUrl(String fileName) {
+        var bucketName = determineBucketBasedOnFileName(fileName);
+
+        try {
             if (!isBucketExists(bucketName)) {
                 minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
                 throw new MinioBucketNotFoundException(
-                       String.format("Bucket %s not found", bucketName));
-
+                        String.format("Bucket %s not found", bucketName));
             }
 
-            var response = minioClient.putObject(
-                    PutObjectArgs
-                            .builder()
+            var url = minioClient.getPresignedObjectUrl(
+                    GetPresignedObjectUrlArgs.builder()
+                            .method(Method.GET)
                             .bucket(bucketName)
-                            .object(objectName)
-                            .stream(stream, stream.available(), -1)
-                            .contentType(type).build());
+                            .object(fileName)
+                            .expiry(expirationTime)
+                            .build()
+            );
 
-            return new BinaryUploadResponse(response.object(), response.versionId());
+            return new InitiateDownloadResponse(url, new Metadata(bucketName, fileName));
 
         } catch (Exception e) {
+            throw new InitiatingUploadException(
+                    String.format("Error while %s", e.getMessage()), e);
+        }
+    }
+
+    @Override
+    public BinaryDownloadResponse downloadFile(String preSignedURL) {
+        try {
+            var response = restTemplate.getForEntity(preSignedURL, byte[].class);
+
+            return new BinaryDownloadResponse(response.getBody(), new Metadata(null, null));
+        } catch (Exception e) {
             throw new MinioUploadException(
-                    String.format("Error while uploading file %s to bucket %s", objectName, bucketName));
+                    String.format("Error while downloading file from %s", preSignedURL));
         }
     }
 
