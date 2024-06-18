@@ -6,8 +6,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.storage.biometrics.storagemimoio.storage.dtos.BinaryUploadResponse;
-import org.storage.biometrics.storagemimoio.storage.dtos.PreSignedURL;
+import org.storage.biometrics.storagemimoio.storage.dtos.InitiateUploadResponse;
 import org.storage.biometrics.storagemimoio.storage.services.MinioService;
+
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v3/minio")
@@ -19,18 +21,19 @@ public class MinioController {
         this.minioService = minioService;
     }
 
-    @GetMapping("/initiate/{bucketName}/{fileName}")
+    @GetMapping("/initiate/upload/{fileName}")
     @ResponseStatus(HttpStatus.OK)
-    public PreSignedURL initiateBucket(@PathVariable String bucketName, @PathVariable String fileName) {
-        var preSignedURL = minioService.generatePresignedUrl(bucketName, fileName);
+    public InitiateUploadResponse initiateBucket(@PathVariable String fileName) {
 
-        return preSignedURL;
+
+        return Optional.ofNullable(minioService.generatePresignedUrl(fileName))
+                .orElseThrow(() -> new RuntimeException("Error while generating presigned URL"));
     }
 
-    @PostMapping("/upload/{bucketName}")
+    @PostMapping("/upload/{presignedURL}")
     @ResponseStatus(HttpStatus.OK)
-    public BinaryUploadResponse uploadFile(@PathVariable String bucketName, @RequestParam MultipartFile file) {
+    public BinaryUploadResponse uploadFile(@PathVariable String presignedURL, @RequestParam MultipartFile file) {
 
-        return minioService.uploadFile(bucketName, file);
+        return minioService.uploadFile(presignedURL, file);
     }
 }

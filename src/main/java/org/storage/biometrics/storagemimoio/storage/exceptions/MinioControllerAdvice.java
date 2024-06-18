@@ -14,4 +14,14 @@ public class MinioControllerAdvice {
     public ErrorMessage handleBucketNotFoundException(MinioBucketNotFoundException e) {
         return new ErrorMessage(e.getMessage(), new Date());
     }
+
+    @ExceptionHandler(InitiatingUploadException.class)
+    public ErrorMessage handleInitiatingUploadException(InitiatingUploadException e) {
+        return new ErrorMessage(e.getMessage(), new Date());
+    }
+
+    @ExceptionHandler(MinioUploadException.class)
+    public ErrorMessage handleMinioUploadException(MinioUploadException e) {
+        return new ErrorMessage(e.getMessage(), new Date());
+    }
 }
