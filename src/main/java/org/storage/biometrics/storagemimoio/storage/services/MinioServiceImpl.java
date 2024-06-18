@@ -12,7 +12,7 @@ import org.storage.biometrics.storagemimoio.storage.dtos.InitiateUploadResponse;
 import org.storage.biometrics.storagemimoio.storage.exceptions.InitiatingUploadException;
 import org.storage.biometrics.storagemimoio.storage.exceptions.MinioBucketNotFoundException;
 import org.storage.biometrics.storagemimoio.storage.exceptions.MinioUploadException;
-import org.storage.biometrics.storagemimoio.utilit.BucketTypes;
+import org.storage.biometrics.storagemimoio.utilit.enums.BucketTypes;
 
 import java.io.InputStream;
 import java.util.List;
@@ -86,8 +86,7 @@ public class MinioServiceImpl implements MinioService{
 
         } catch (Exception e) {
             throw new MinioUploadException(
-                    String.format("Error while uploading file %s to bucket %s", objectName, bucketName),
-                    e);
+                    String.format("Error while uploading file %s to bucket %s", objectName, bucketName));
         }
     }
 

@@ -2,7 +2,7 @@ package org.storage.biometrics.storagemimoio.auth.exceptions;
 
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.storage.biometrics.storagemimoio.utilit.ErrorMessage;
+import org.storage.biometrics.storagemimoio.utilit.exceptions.ErrorMessage;
 
 import java.util.Date;
 

@@ -1,4 +1,4 @@
-package org.storage.biometrics.storagemimoio.utilit;
+package org.storage.biometrics.storagemimoio.utilit.enums;
 
 public enum BucketTypes {
     VIDEOS("videos"),

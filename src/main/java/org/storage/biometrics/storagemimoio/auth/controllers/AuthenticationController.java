@@ -3,6 +3,7 @@ package org.storage.biometrics.storagemimoio.auth.controllers;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.storage.biometrics.storagemimoio.auth.dtos.RegisterUserDto;
 import org.storage.biometrics.storagemimoio.auth.dtos.LoginUserDto;
@@ -24,6 +25,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v3/auth")
+@Tag(name = "Authentication", description = "Authentication operations")
 public class AuthenticationController {
     private final JwtService jwtService;
     private final AuthenticationService authenticationService;

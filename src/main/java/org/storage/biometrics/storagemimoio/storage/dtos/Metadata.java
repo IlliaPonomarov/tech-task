@@ -1,9 +1,5 @@
 package org.storage.biometrics.storagemimoio.storage.dtos;
 
-import org.storage.biometrics.storagemimoio.utilit.MimeType;
-
-import java.util.Date;
-
 public record Metadata(String mimeType, String filename) {
     public Metadata {
         if (filename == null || filename.isBlank()) {
