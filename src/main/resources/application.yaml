@@ -33,8 +33,9 @@ security:
 
 minio:
   url: ${MINIO_URL:http://localhost:9000}
-  access-key: ${MINIO_ACCESS_KEY:ntLUlgHiDo3kBYyUhkuf}
-  secret-key: ${MINIO_SECRET_KEY:qNKhzzmBc9B6m3TvQF0ETJMtX5AKUJzhZLRvHaSO}
+  access-key: ${MINIO_ACCESS_KEY:OtwRLldr3MVNdgPnNTRq}
+  secret-key: ${MINIO_SECRET_KEY:SDVwPNDnPPfPnZLvBXkF8Uw0Xa8QicgwZUXMzGZ7}
   backet-name: ${MINIO_BACKET_NAME:name}
-  expirationTime: ${MINIO_EXPIRATION_TIME:86400000}
+#  expiration-time: 2 days in milliseconds
+  expirationTime: ${MINIO_EXPIRATION_TIME:600000}
 

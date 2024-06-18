@@ -30,9 +30,9 @@ public class MinioControllerAdvice {
         return new ErrorMessage(e.getMessage(), new Date());
     }
 
-//    @ExceptionHandler(MethodArgumentNotValidException.class)
-//    @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
-//    public ErrorMessage handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
-//        return new ErrorMessage(e.getMessage(), new Date());
-//    }
+    @ExceptionHandler(ExpirationTimeException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorMessage handleExpirationTimeException(ExpirationTimeException e) {
+        return new ErrorMessage(e.getMessage(), new Date());
+    }
 }

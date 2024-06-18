@@ -1,12 +1,12 @@
 package org.storage.biometrics.storagemimoio.storage.dtos;
 
-public record InitiateUploadResponse(String url, Metadata metadata) {
+public record InitiateUploadResponse(String preSignedUploadURL, Metadata metadata) {
 
     @Override
     public String toString() {
         return String.format(
-                "PreSignedURLResponse{url='%s', metadata=%s}",
-                url,
+                "PreSignedURLResponse{preSignedUploadURL='%s', metadata=%s}",
+                preSignedUploadURL,
                 metadata
         );
     }

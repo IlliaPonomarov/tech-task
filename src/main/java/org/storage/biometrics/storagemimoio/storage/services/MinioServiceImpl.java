@@ -9,6 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.storage.biometrics.storagemimoio.storage.dtos.BinaryUploadResponse;
 import org.storage.biometrics.storagemimoio.storage.dtos.Metadata;
 import org.storage.biometrics.storagemimoio.storage.dtos.InitiateUploadResponse;
+import org.storage.biometrics.storagemimoio.storage.exceptions.ExpirationTimeException;
 import org.storage.biometrics.storagemimoio.storage.exceptions.InitiatingUploadException;
 import org.storage.biometrics.storagemimoio.storage.exceptions.MinioBucketNotFoundException;
 import org.storage.biometrics.storagemimoio.storage.exceptions.MinioUploadException;
@@ -36,12 +37,18 @@ public class MinioServiceImpl implements MinioService{
     public InitiateUploadResponse generatePresignedUrl(final String objectName) {
         var bucketName = determineBucketBasedOnFileName(objectName);
 
+        // expiry must be minimum 1 second to maximum 7 days
+        if (expirationTime < 1 || expirationTime > 604800) {
+            throw new ExpirationTimeException("Expiration time must be between 1 second and 7 days");
+        }
+
+        try {
         if (!isBucketExists(bucketName)) {
+            minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
             throw new MinioBucketNotFoundException(
                     String.format("Bucket %s not found", bucketName));
         }
 
-        try {
             var url = minioClient.getPresignedObjectUrl(
                     GetPresignedObjectUrlArgs.builder()
                             .method(Method.PUT)
@@ -55,8 +62,7 @@ public class MinioServiceImpl implements MinioService{
 
         } catch (Exception e) {
             throw new InitiatingUploadException(
-                    String.format("Error while generating presigned URL for %s", objectName),
-                    e);
+                    String.format("Error while %s", e.getMessage()), e);
         }
     }
 
@@ -76,7 +82,8 @@ public class MinioServiceImpl implements MinioService{
             }
 
             var response = minioClient.putObject(
-                    PutObjectArgs.builder()
+                    PutObjectArgs
+                            .builder()
                             .bucket(bucketName)
                             .object(objectName)
                             .stream(stream, stream.available(), -1)

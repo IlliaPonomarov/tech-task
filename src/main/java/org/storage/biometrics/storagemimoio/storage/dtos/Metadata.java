@@ -1,6 +1,6 @@
 package org.storage.biometrics.storagemimoio.storage.dtos;
 
-public record Metadata(String mimeType, String filename) {
+public record Metadata(String bucket, String filename) {
     public Metadata {
         if (filename == null || filename.isBlank()) {
             throw new IllegalArgumentException("Filename cannot be null or empty");
@@ -10,8 +10,8 @@ public record Metadata(String mimeType, String filename) {
     @Override
     public String toString() {
         return String.format(
-                "Metadata{mimeType=%s, filename='%s'}",
-                mimeType,
+                "Metadata{bucket=%s, filename='%s'}",
+                bucket,
                 filename
         );
     }
