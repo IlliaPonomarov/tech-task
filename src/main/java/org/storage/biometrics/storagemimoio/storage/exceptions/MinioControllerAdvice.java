@@ -35,4 +35,10 @@ public class MinioControllerAdvice {
     public ErrorMessage handleExpirationTimeException(ExpirationTimeException e) {
         return new ErrorMessage(e.getMessage(), new Date());
     }
+
+    @ExceptionHandler(MinioDownloadException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorMessage handleMinioDownloadException(MinioDownloadException e) {
+        return new ErrorMessage(e.getMessage(), new Date());
+    }
 }

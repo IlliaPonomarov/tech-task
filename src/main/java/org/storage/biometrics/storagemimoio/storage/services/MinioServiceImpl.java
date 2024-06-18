@@ -15,10 +15,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.storage.biometrics.storagemimoio.storage.dtos.*;
-import org.storage.biometrics.storagemimoio.storage.exceptions.ExpirationTimeException;
-import org.storage.biometrics.storagemimoio.storage.exceptions.InitiatingUploadException;
-import org.storage.biometrics.storagemimoio.storage.exceptions.MinioBucketNotFoundException;
-import org.storage.biometrics.storagemimoio.storage.exceptions.MinioUploadException;
+import org.storage.biometrics.storagemimoio.storage.exceptions.*;
 import org.storage.biometrics.storagemimoio.utilit.enums.BucketTypes;
 
 import java.io.IOException;
@@ -26,6 +23,7 @@ import java.io.InputStream;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -81,7 +79,7 @@ public class MinioServiceImpl implements MinioService{
     public BinaryUploadResponse uploadFile(final String preSignedUrl, final MultipartFile file) {
         var objectName = file.getOriginalFilename();
         try {
-            OkHttpClient client = new OkHttpClient().newBuilder().build();
+            var client = new OkHttpClient().newBuilder().build();
             var mediaType = okhttp3.MediaType.parse("application/octet-stream");
             var requestBody = okhttp3.RequestBody.create(mediaType, file.getBytes());
             var request = new okhttp3.Request.Builder()
@@ -100,7 +98,6 @@ public class MinioServiceImpl implements MinioService{
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
     }
 
     @Override
@@ -133,13 +130,28 @@ public class MinioServiceImpl implements MinioService{
 
     @Override
     public BinaryDownloadResponse downloadFile(String preSignedURL) {
-        try {
-            var response = restTemplate.getForEntity(preSignedURL, byte[].class);
+        var client = new OkHttpClient().newBuilder().build();
+        var request = new okhttp3.Request.Builder()
+                .url(preSignedURL)
+                .method("GET", null)
+                .build();
 
-            return new BinaryDownloadResponse(response.getBody(), new Metadata(null, null));
-        } catch (Exception e) {
-            throw new MinioUploadException(
-                    String.format("Error while downloading file from %s", preSignedURL));
+        try {
+            var response = client.newCall(request).execute();
+
+            if (!response.isSuccessful()) {
+                throw new MinioDownloadException("Error while downloading file");
+            }
+
+            Optional<InputStream> inputStream = Optional.ofNullable(response.body()).map(okhttp3.ResponseBody::byteStream);
+
+            if (inputStream.isEmpty() || inputStream.orElseThrow().readAllBytes().length == 0) {
+                throw new MinioDownloadException("Error while downloading file");
+            }
+
+            return new BinaryDownloadResponse(inputStream.orElseThrow().readAllBytes(), true);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 

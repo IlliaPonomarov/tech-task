@@ -113,9 +113,9 @@ public class MinioController {
             })
     })
     @SecurityRequirement(name = "Bearer Authentication")
-    @GetMapping(value = "/download/{preSignedURL}", consumes = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @GetMapping(value = "/download", consumes = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     @ResponseStatus(HttpStatus.OK)
-    public BinaryDownloadResponse downloadFile(@PathVariable @PreSignedURLValid String preSignedURL) {
+    public BinaryDownloadResponse downloadFile( @PreSignedURLValid @RequestParam String preSignedURL) {
         return minioService.downloadFile(preSignedURL);
     }
 
