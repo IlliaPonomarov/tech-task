@@ -1,19 +1,47 @@
-FROM openjdk:17-slim AS builder
-
-WORKDIR /app
-
-COPY pom.xml ./
-COPY  . .
-
-RUN mvn clean package
-
 FROM openjdk:17-slim
 
 WORKDIR /app
 
-COPY --from=builder /app/target/*.jar biostorage.jar
-EXPOSE 7777
+COPY  . .
 
+
+# Get env var from docker-compose and set it in the application.properties
+ARG DATASOURCE_URL
+ENV DATASOURCE_URL=${DATASOURCE_URL}
+
+ARG POSTGRES_USER
+ENV POSTGRES_USER=${POSTGRES_USER}
+
+ARG POSTGRES_PASSWORD
+ENV POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+
+ARG POSTGRES_DB
+ENV POSTGRES_DB=${POSTGRES_DB}
+
+ARG JWT_SECRET
+ENV JWT_SECRET=${JWT_SECRET}
+
+ARG JWT_EXPIRATION
+ENV JWT_EXPIRATION=${JWT_EXPIRATION}
+
+ARG MINIO_URL
+ENV MINIO_URL=${MINIO_URL}
+
+ARG MINIO_ACCESS_KEY
+ENV MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+
+ARG MINIO_SECRET_KEY
+ENV MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+
+ARG MINIO_BUCKET_NAME
+ENV MINIO_BUCKET_NAME=${MINIO_BUCKET_NAME}
+
+
+
+COPY  target/*.jar biostorage.jar
+EXPOSE 8765
+
+CMD ["-Ddatasource.url=${DATASOURCE_URL}", "-Dspring.datasource.username=${POSTGRES_USER}", "-Dspring.datasource.password=${POSTGRES_PASSWORD}", "-Dspring.datasource.db=${POSTGRES_DB}"]
 
 ENTRYPOINT ["java", "-jar", "biostorage.jar"]
 

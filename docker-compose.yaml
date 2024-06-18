@@ -3,6 +3,30 @@ version: '1.0'
 
 
 services:
+
+  api:
+    image: bio:latest
+
+    depends_on:
+      - postgres
+      - minio
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8765:8765"
+    environment:
+      - DATASOURCE_URL=jdbc:postgresql://postgres:5432/biodb
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
+      - JWT_SECRET=3cfa76ef14937c1c0ea519f8fc057a80fcd04a7420f8e8bcd0a7567c272e007b
+      - JWT_EXPIRATION_TIME=86400
+      - MINIO_URL=http://minio:9000
+      - MINIO_ACCESS_KEY=myrootuser
+      - MINIO_SECRET_KEY=mysecretpassword
+      - MINIO_BACKET_NAME=temp
+      - MINIO_EXPIRATION_TIME=600000
+
   postgres:
     image: postgres:14-alpine
     volumes:

@@ -39,3 +39,44 @@ minio:
 #  expiration-time: 2 days in milliseconds
   expirationTime: ${MINIO_EXPIRATION_TIME:600000}
 
+#spring:
+#  application:
+#    name: biometric-storage-api
+#
+#  #  Configurations for the database
+#  datasource:
+#    url: ${DATASOURCE_URL}
+#    username: ${POSTGRES_USER}
+#    password: ${POSTGRES_PASSWORD}
+#
+#  #  Configurations for the JPA
+#  jpa:
+#    hibernate:
+#      ddl-auto: update
+#    properties:
+#      hibernate:
+#        connection:
+#          url: ${DATASOURCE_URL}
+#          username: ${POSTGRES_USER}
+#          password: ${POSTGRES_PASSWORD}
+#        dialect: org.hibernate.dialect.PostgreSQLDialect
+#
+## Configurations for the server
+#server:
+#  port: 8765
+#
+##  Configurations for the JWT
+#security:
+#  jwt:
+#    secret-key: ${JWT_SECRET}
+#    expiration-time: ${JWT_EXPIRATION_TIME}
+#
+#
+#minio:
+#  url: ${MINIO_URL}
+#  access-key: ${MINIO_ACCESS_KEY}
+#  secret-key: ${MINIO_SECRET_KEY}
+#  backet-name: ${MINIO_BACKET_NAME}
+#  #  expiration-time: 2 days in milliseconds
+#  expirationTime: ${MINIO_EXPIRATION_TIME}
+
