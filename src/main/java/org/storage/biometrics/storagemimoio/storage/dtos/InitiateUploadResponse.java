@@ -1,13 +1,11 @@
 package org.storage.biometrics.storagemimoio.storage.dtos;
 
-public record InitiateUploadResponse(String preSignedUploadURL, Metadata metadata) {
+import org.storage.biometrics.storagemimoio.utilit.enums.InitiateTypes;
 
-    @Override
-    public String toString() {
-        return String.format(
-                "PreSignedURLResponse{preSignedUploadURL='%s', metadata=%s}",
-                preSignedUploadURL,
-                metadata
-        );
-    }
+import java.util.Date;
+
+public record InitiateUploadResponse(String preSignedUploadURL,
+                                     InitiateTypes types,
+                                     Date expiresAt,
+                                     Metadata metadata) {
 }

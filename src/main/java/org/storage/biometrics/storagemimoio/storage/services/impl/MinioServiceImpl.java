@@ -10,6 +10,7 @@ import org.springframework.web.client.RestTemplate;
 import org.storage.biometrics.storagemimoio.storage.dtos.*;
 import org.storage.biometrics.storagemimoio.storage.exceptions.*;
 import org.storage.biometrics.storagemimoio.storage.services.MinioService;
+import org.storage.biometrics.storagemimoio.utilit.enums.InitiateTypes;
 
 import java.util.*;
 
@@ -74,7 +75,7 @@ public class MinioServiceImpl implements MinioService {
             // here we should save info about file in database and return
             //  ...
 
-            return new InitiateUploadResponse(url, new Metadata(UUID.randomUUID(), bucketName, objectName, new Date(), new Date()));
+            return new InitiateUploadResponse(url, InitiateTypes.UPLOAD, expirationDate, new Metadata(UUID.randomUUID(), bucketName, objectName, new Date(), new Date()));
 
         } catch (Exception e) {
             throw new InitiatingAdminUploadException(
@@ -113,8 +114,7 @@ public class MinioServiceImpl implements MinioService {
              * ...
              */
 
-            return new InitiateDownloadResponse(url, new Metadata(
-                    UUID.randomUUID(), bucketName, fileName, new Date(), new Date()));
+            return new InitiateDownloadResponse(url, InitiateTypes.DOWNLOAD, expirationDate, new Metadata(UUID.randomUUID(), bucketName, fileName, new Date(), new Date()));
 
         } catch (Exception e) {
             throw new InitiatingAdminUploadException(

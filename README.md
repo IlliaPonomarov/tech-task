@@ -136,6 +136,37 @@ CREATE TABLE files_minio (
 - We should secure the API with **JWT** to authenticate users and authorize access to the API endpoints.
 - We should separate the user roles and permissions to control access to the API endpoints and control responses based on the user role.
 
+If you wanna test the API, you can register a new user and login to get the JWT token.
+```http request
+POST /api/v3/auth/register
+
+Request Body:
+{
+  "username": "testuser",
+  "password": "testpassword"
+}
+```
+```http request
+POST /api/v3/auth/login
+```
+
+
+Request Body:
+```json
+{
+  "username": "testuser",
+  "password": "testpassword"
+}
+```
+
+Response:
+```json
+{
+"token" : "token",
+"expiresAt": "2022-12-31T23:59:59Z"
+}
+```
+
 
 ### Optimize Database with Indexes<br/>
   We can optimize the database performance by creating indexes on the columns that are frequently used in queries. 

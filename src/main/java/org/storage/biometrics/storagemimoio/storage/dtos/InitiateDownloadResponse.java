@@ -1,21 +1,11 @@
 package org.storage.biometrics.storagemimoio.storage.dtos;
 
-public record InitiateDownloadResponse(String preSignedURl, Metadata metadata) {
-    public InitiateDownloadResponse {
-        if (preSignedURl == null || preSignedURl.isBlank()) {
-            throw new IllegalArgumentException("PreSigned URL cannot be null or empty");
-        }
-        if (metadata == null) {
-            throw new IllegalArgumentException("Metadata cannot be null");
-        }
-    }
+import org.storage.biometrics.storagemimoio.utilit.enums.InitiateTypes;
 
-    @Override
-    public String toString() {
-        return String.format(
-                "InitiateDownloadResponse{preSignedURl='%s', metadata=%s}",
-                preSignedURl,
-                metadata
-        );
-    }
+import java.util.Date;
+
+public record InitiateDownloadResponse(String preSignedUploadURL,
+                                       InitiateTypes types,
+                                       Date expiresAt,
+                                       Metadata metadata) {
 }
