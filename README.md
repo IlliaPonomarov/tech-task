@@ -103,9 +103,7 @@ GET /api/v3/minio/initiate/download/{fileName}/{bucketName}
 
 ## Identify Issues:
 
-### Technical Issues:
-
-### Database for Metadata<br/>
+### Database Issues<br/>
 For example , If we get a fingerprint binary file from the user, we should save the fingerprint file info to the database.
 We can use One-toMany relationship between the user and the file to associate the file with the user.<br/>
 
@@ -124,21 +122,54 @@ CREATE TABLE fingerprint (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(id), -- User who uploaded the fingerprint file
     fingerprint_name VARCHAR(255) NOT NULL, -- Name of the fingerprint file
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Creation timestamp
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Last updated timestamp
+    captured_date TIMESTAMP NOT NULL, -- Date when the fingerprint was captured
+    fingerprint_quality VARCHAR(50) NOT NULL, -- Quality of the fingerprint data
+    data_quality VARCHAR(50) NOT NULL, -- Quality of the data
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP-- Creation timestamp
 );
 
+CREATE TABLE face (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id), -- User who uploaded the face file
+    face_name VARCHAR(255) NOT NULL, -- Name of the face file
+    captured_date TIMESTAMP NOT NULL, -- Date when the face was captured
+    face_position VARCHAR(50) NOT NULL, -- Position of the face in the image
+    data_quality VARCHAR(50) NOT NULL, -- Quality of the face data
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Creation timestamp
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Last updated timestamp
+);
+
+CREATE TABLE attachment (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id), -- User who uploaded the attachment file
+    attachment_name VARCHAR(255) NOT NULL, -- Name of the attachment file
+    attachment_type VARCHAR(50) NOT NULL, -- Type of the attachment (e.g., image, document)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Creation timestamp
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Last updated timestamp
+);
+
+CREATE TABLE video (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id), -- User who uploaded the video file
+    video_name VARCHAR(255) NOT NULL, -- Name of the video file
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Creation timestamp
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Last updated timestamp
+);
 
 CREATE TABLE files_minio (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(id), -- User who uploaded the file
     file_name VARCHAR(255) NOT NULL, -- Name of the file
+    fingerprint_id INTEGER REFERENCES fingerprint(id), -- Fingerprint ID associated with the file
+    face_id INTEGER REFERENCES face(id), -- Face ID associated with the file
+    attachment_id INTEGER REFERENCES attachment(id), -- Attachment ID associated with the file
+    video_id INTEGER REFERENCES video(id), -- Video ID associated with the file
     bucket_name VARCHAR(255) NOT NULL, -- Name of the bucket
     presigned_url VARCHAR(255) NOT NULL, -- Pre-signed URL for file upload/download
     presigned_url_type VARCHAR(50) NOT NULL, -- Type of pre-signed URL (upload/download)
     url_expires_at TIMESTAMP NOT NULL, -- Expiration time for the pre-signed URL
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Creation timestamp
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Last updated timestamp
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Last updated timestamp
 );
 ```
 
@@ -146,11 +177,8 @@ CREATE TABLE files_minio (
 - We can use the user ID to associate the fingerprint file with the user. For example , We can use the user ID as a foreign key in the files_minio table to link the fingerprint file with the user who uploaded the file.
 - If User have relation to the fingerprint column from fingerprint table, we can use the user ID as a foreign key in the fingerprint table to link the fingerprint file with the user who uploaded the file.
 - To get associated fingerprint files for a user, we can query the files_minio table using the user ID to retrieve the fingerprint files uploaded by the user.
-```postgresql
+- We can put link to the fingerprint table in the files_minio table to associate the fingerprint file with the user who uploaded the file.
 
-SELECT * FROM files_minio AS f JOIN fingerprint AS fp ON f.user_id = fp.user_id;
-
-```
 
 
 ### Authorization and Authentication<br/>
