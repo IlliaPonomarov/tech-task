@@ -120,6 +120,15 @@ CREATE TABLE users (
                 
 );
 
+CREATE TABLE fingerprint (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id), -- User who uploaded the fingerprint file
+    fingerprint_name VARCHAR(255) NOT NULL, -- Name of the fingerprint file
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Creation timestamp
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Last updated timestamp
+);
+
+
 CREATE TABLE files_minio (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(id), -- User who uploaded the file
@@ -132,6 +141,18 @@ CREATE TABLE files_minio (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Last updated timestamp
 );
 ```
+
+#### How Can we associate the fingerprint file with the column from fingerprint table?
+- We can use the user ID to associate the fingerprint file with the user. For example , We can use the user ID as a foreign key in the files_minio table to link the fingerprint file with the user who uploaded the file.
+- If User have relation to the fingerprint column from fingerprint table, we can use the user ID as a foreign key in the fingerprint table to link the fingerprint file with the user who uploaded the file.
+- To get associated fingerprint files for a user, we can query the files_minio table using the user ID to retrieve the fingerprint files uploaded by the user.
+```postgresql
+
+SELECT * FROM files_minio AS f JOIN fingerprint AS fp ON f.user_id = fp.user_id;
+
+```
+
+
 ### Authorization and Authentication<br/>
 - We should secure the API with **JWT** to authenticate users and authorize access to the API endpoints.
 - We should separate the user roles and permissions to control access to the API endpoints and control responses based on the user role.
