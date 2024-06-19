@@ -20,6 +20,7 @@ import org.storage.biometrics.storagemimoio.auth.services.UserService;
 import org.storage.biometrics.storagemimoio.storage.dtos.InitiateDownloadResponse;
 import org.storage.biometrics.storagemimoio.storage.dtos.InitiateUploadResponse;
 import org.storage.biometrics.storagemimoio.storage.exceptions.MinioBucketNotFoundException;
+import org.storage.biometrics.storagemimoio.storage.exceptions.PreSignedUrlGenerationException;
 import org.storage.biometrics.storagemimoio.storage.services.MinioService;
 import org.storage.biometrics.storagemimoio.utilit.exceptions.ErrorMessage;
 import org.storage.biometrics.storagemimoio.utilit.validators.annotations.FilenameValid;
@@ -74,9 +75,12 @@ public class MinioController {
             throw new MinioBucketNotFoundException(
                     String.format("Bucket type %s not found", attachmentType));
 
+        var response = minioService.generatePreSignedUploadUrl(fileName, attachmentType, userOptional.get().getId());
 
-        return Optional.ofNullable(minioService.generatePreSignedUploadUrl(fileName, attachmentType, userOptional.get().getId()))
-                .orElseThrow(() -> new RuntimeException("Error while generating presigned URL"));
+
+
+        return Optional.ofNullable(response)
+                .orElseThrow(() -> new PreSignedUrlGenerationException("Error while generating presigned URL"));
     }
 
 
@@ -113,8 +117,10 @@ public class MinioController {
                     String.format("Bucket type %s not found", attachmentType));
         }
 
-        return Optional.ofNullable(minioService.generatePreSignedDownloadUrl(fileName, attachmentType, userOptional.get().getId()))
-                .orElseThrow(() -> new RuntimeException("Error while generating presigned URL"));
+        var response = minioService.generatePreSignedDownloadUrl(fileName, attachmentType, userOptional.get().getId());
+
+        return Optional.ofNullable(response)
+                .orElseThrow(() -> new PreSignedUrlGenerationException("Error while generating presigned URL"));
     }
 
 

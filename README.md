@@ -6,6 +6,8 @@
  - [Design API](#design-api)
  - [Documentation](#documentation)
  - [Implement API](#implement-api)
+ - [How to run the project](#how-to-run-the-project)
+ - [Docker and Docker-compose](#docker-and-docker-compose)
 
 ## Understand the Requirements:
 We should design an API that allows integrators to upload and download binary data to and from MinIO.
@@ -14,18 +16,83 @@ We should design an API that allows integrators to upload and download binary da
 attachments, videos).
 ### API Functionalities:
 1. Initiate Upload:
-- An API endpoint should provide pre-signed URLs for file uploads. 
-- The response should include URLs and metadata for direct upload to
-MinIO.
-- The API should determine the appropriate bucket based on the uploaded
-file type.
-2. Upload:
-- Integrators should upload binary data to MinIO using the pre-signed
-URLs.
-- Pre-signed URLs should be secure and have a limited expiration time.
-3. Download:
-- Integrators should access binary data using pre-signed URLs
-- Pre-signed URLs should be secure and have a limited expiration time.
+- Give the pre-signed URL for uploading binary data to MinIO.
+- The pre-signed URL should be valid for a limited time.
+- The pre-signed URL should be unique for each upload request.
+- The pre-signed URL should be associated with the user, file and bucket name.
+- If the user has User Role, the pre-signed URL should be returned.
+- If the user has Admin Role, the pre-signed URL should be returned with the bucket name.<br/>
+**Request:**
+```http request
+GET /api/v3/minio/initiate/upload/{fileName}/{bucketName}
+```
+
+**Response for User Role:**
+```json
+{
+  "preSignedUrl": "https://minio.example.com/upload/1234567890",
+  "urlType": "upload",
+  "expiresAt": "2022-12-31T23:59:59Z",
+  "metadata": {
+        "fileName": "fingerprint_1234567890"
+    }
+}
+```
+
+**Response for Admin Role:**
+```json
+{
+  "preSignedUrl": "https://minio.example.com/upload/1234567890",
+  "urlType": "upload",
+  "expiresAt": "2022-12-31T23:59:59Z",
+  "metadata": {
+    "fileId": "1234567890",
+    "bucketName": "fingerprints",
+    "fileName": "fingerprint_1234567890",
+    "createdAt": "2022-12-31T23:59:59Z",
+    "updatedAt": "2022-12-31T23:59:59Z"
+  }
+}
+```
+
+2. Initiate Download:
+- Give the pre-signed URL for downloading binary data from MinIO.
+  - The pre-signed URL should be valid for a limited time.
+  - The pre-signed URL should be unique for each download request and should be associated with the user, file and bucket name.
+  - If the user is authorized to download the file, the pre-signed URL should be returned.
+
+**Request:**
+```http request
+GET /api/v3/minio/initiate/download/{fileName}/{bucketName}
+```
+
+**Response for User Role:**
+```json
+{
+  "preSignedUrl": "https://minio.example.com/download/1234567890",
+  "urlType": "download",
+  "expiresAt": "2022-12-31T23:59:59Z",
+  "metadata": {
+    "fileName": "fingerprint_1234567890"
+  }
+}
+```
+
+**Response for Admin Role:**
+```json
+{
+  "preSignedUrl": "https://minio.example.com/download/1234567890",
+  "urlType": "download",
+  "expiresAt": "2022-12-31T23:59:59Z",
+  "metadata": {
+    "fileId": "1234567890",
+    "bucketName": "fingerprints",
+    "fileName": "fingerprint_1234567890",
+    "createdAt": "2022-12-31T23:59:59Z",
+    "updatedAt": "2022-12-31T23:59:59Z"
+  }
+}
+```
 
 
 ### Security:
@@ -60,18 +127,12 @@ CREATE TABLE files_minio (
     url_expires_at TIMESTAMP NOT NULL, -- Expiration time for the pre-signed URL
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Last updated timestamp
-    deleted_at TIMESTAMP -- Soft delete timestamp
 );
 ```
+### Authorization and Authentication<br/>
+- We should secure the API with **JWT** to authenticate users and authorize access to the API endpoints.
+- We should separate the user roles and permissions to control access to the API endpoints and control responses based on the user role.
 
-
-### Authorization with Pre-Signed URLs<br/>
-1. Include User Information in Pre-Signed URLs<br/>
-   Include user information (e.g., user ID) directly within the pre-signed URL. This approach simplifies implementation but might expose user information in the URL itself.<br/>
-2. Validate User Information in Pre-Signed URLs<br/>
-   Validate user information (e.g., user ID) in the pre-signed URL before allowing access to the resource. This approach adds an extra layer of security but requires additional validation logic.<br/>
-3. Use JWT Tokens with Pre-Signed URLs<br/>
-   Use JWT tokens with pre-signed URLs to authenticate and authorize users. This approach provides a secure and scalable solution but requires token management and validation.<br/>
 
 ### Optimize Database with Indexes<br/>
   We can optimize the database performance by creating indexes on the columns that are frequently used in queries. 
@@ -89,8 +150,8 @@ CREATE TABLE files_minio (
 ### Use User roles to restrict response data<br/>
 We can use user roles to restrict the data that is returned in the API responses. By associating specific roles with users, we can control the access level of each user and determine which data they are allowed to view or modify.<br/>
 For Example:<br/>
-- Admin Role: Full access to all data and API endpoints. ( Upload, Download );
-- User Role: Limited access to specific data and API endpoints. ( Download );
+- **Admin Role**: Full access to all data and API endpoints. ( Upload, Download );
+- **User Role**: Limited access to specific data and API endpoints. ( Download );
 
 ### Use Caching to Improve Performance<br/>
   To DB We save the metadata of the file uploaded to MinIO.
@@ -101,10 +162,11 @@ For Example:<br/>
   - To cache we can save pre-signed URL and metadata of the file uploaded to MinIO.<br/>
   - We can use a caching mechanism like Redis to store the pre-signed URLs and metadata in memory for faster access.<br/>
 
+## Minio file LifeCycle Configuration
+- We can use Minio's file life cycle configuration to automatically delete files after a certain period of time. This feature can help manage storage costs and ensure data privacy by removing outdated or unused files from the storage system.<br/>
+
 ## Design API
-- API should have endpoints for initiating upload, uploading, and downloading binary data
-- API should be secured with JWT
-- API should have endpoints for user registration and authentication
+- You can access the Swagger Specification [here](storage-minio-swagger.yaml) to view the API design.
 
 ### Authentication Endpoints:
 ```http request
@@ -126,10 +188,53 @@ GET /api/v3/minio/initiate/upload/{fileName}/{bucketName}
 GET /api/v3/minio/initiate/download/{fileName}/{bucketName}
 ```
 
+### Remove old object from Minio
+- We can use Minio's file life cycle configuration to automatically delete files after a certain period of time. This feature can help
+manage storage costs and ensure data privacy by removing outdated or unused files from the storage system.<br/>
 
-## Documentation:
+File Example:
+```json
+{
+  "Rules": [{
+      "Expiration": {
+        "Date": "2020-01-01T00:00:00.000Z"
+      },
+      "ID": "OldPictures",
+      "Filter": {
+        "Prefix": "old/"
+      },
+      "Status": "Enabled"
+    },
+    {
+      "Expiration": {
+        "Days": 7
+      },
+      "ID": "TempUploads",
+      "Filter": {
+        "Prefix": "temp/"
+      },
+      "Status": "Enabled"
+    }
+  ]
+}
+```
+
+# Documentation:
 - You can access the Swagger Specification [here](storage-minio-swagger.yaml)
 - You can use Swagger Editor to view the Swagger Specification [here](https://editor.swagger.io/), just copy and paste the content of the file [storage-minio-swagger.yaml](storage-minio-swagger.yaml) to the editor.
 
-## Implement API
+# Implement API
 - You can find the implementation of the API in the [src](src) directory.
+
+# How to run the project
+- You can run the project using the following steps:
+- Use docker-compose to run the project:
+```bash
+git clone https://github.com/IlliaPonomarov/tech-task.git
+cd tech-task
+docker-compose up
+```
+
+# Docker and Docker-compose
+- You can find the Dockerfile in the [Dockerfile](Dockerfile) file.
+- You can find the docker-compose file in the [docker-compose.yaml](docker-compose.yaml) file.

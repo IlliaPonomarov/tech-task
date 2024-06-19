@@ -1,7 +1,7 @@
 package org.storage.biometrics.storagemimoio.storage.exceptions;
 
-public class InitiatingUploadException extends RuntimeException {
-    public InitiatingUploadException(String format, Exception e) {
+public class InitiatingAdminUploadException extends RuntimeException {
+    public InitiatingAdminUploadException(String format, Exception e) {
         super(format, e);
     }
 }

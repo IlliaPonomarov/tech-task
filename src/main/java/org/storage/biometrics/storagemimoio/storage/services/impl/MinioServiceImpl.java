@@ -1,35 +1,20 @@
-package org.storage.biometrics.storagemimoio.storage.services;
+package org.storage.biometrics.storagemimoio.storage.services.impl;
 
 import io.minio.*;
-import io.minio.errors.*;
 import io.minio.http.Method;
 import jakarta.annotation.PostConstruct;
-import okhttp3.OkHttpClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.multipart.MultipartFile;
-import org.storage.biometrics.storagemimoio.auth.entities.User;
 import org.storage.biometrics.storagemimoio.storage.dtos.*;
 import org.storage.biometrics.storagemimoio.storage.exceptions.*;
-import org.storage.biometrics.storagemimoio.utilit.enums.BucketTypes;
+import org.storage.biometrics.storagemimoio.storage.services.MinioService;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
-import java.util.function.Function;
-import java.util.function.Predicate;
 
 @Service("minioServiceImpl")
-public class MinioServiceImpl implements MinioService{
+public class MinioServiceImpl implements MinioService {
 
     private final MinioClient minioClient;
     private final RestTemplate restTemplate;
@@ -57,15 +42,12 @@ public class MinioServiceImpl implements MinioService{
     /**
      * Method to generate pre-signed URL for uploading file to Minio
      * @param objectName is the name of the file
-     * @param userId -
-     * @return
+     * @param userId - user id
+     * @return InitiateUploadResponse - URL and Metadata
      */
 
     @Override
     public InitiateUploadResponse generatePreSignedUploadUrl(final String objectName, final String bucketName, long userId) {
-
-
-
 
         try {
             if (!isExpirationTimeValid(expirationTime)) {
@@ -92,10 +74,10 @@ public class MinioServiceImpl implements MinioService{
             // here we should save info about file in database and return
             //  ...
 
-            return new InitiateUploadResponse(url, new Metadata(UUID.randomUUID(), userId, bucketName, objectName, expirationDate));
+            return new InitiateUploadResponse(url, new Metadata(UUID.randomUUID(), bucketName, objectName, new Date(), new Date()));
 
         } catch (Exception e) {
-            throw new InitiatingUploadException(
+            throw new InitiatingAdminUploadException(
                     String.format("Error while %s", e.getMessage()), e);
         }
     }
@@ -131,10 +113,11 @@ public class MinioServiceImpl implements MinioService{
              * ...
              */
 
-            return new InitiateDownloadResponse(url, new Metadata(UUID.randomUUID(), userId, bucketName, fileName, expirationDate));
+            return new InitiateDownloadResponse(url, new Metadata(
+                    UUID.randomUUID(), bucketName, fileName, new Date(), new Date()));
 
         } catch (Exception e) {
-            throw new InitiatingUploadException(
+            throw new InitiatingAdminUploadException(
                     String.format("Error while %s", e.getMessage()), e);
         }
     }

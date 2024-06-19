@@ -25,6 +25,7 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String password;
 
+
     @CreationTimestamp
     @Column(updatable = false, name = "created_at")
     private Date createdAt;

@@ -18,9 +18,9 @@ public class MinioControllerAdvice {
         return new ErrorMessage(e.getMessage(), new Date());
     }
 
-    @ExceptionHandler(InitiatingUploadException.class)
+    @ExceptionHandler(InitiatingAdminUploadException.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ErrorMessage handleInitiatingUploadException(InitiatingUploadException e) {
+    public ErrorMessage handleInitiatingUploadException(InitiatingAdminUploadException e) {
         return new ErrorMessage(e.getMessage(), new Date());
     }
 
@@ -45,6 +45,12 @@ public class MinioControllerAdvice {
     @ExceptionHandler(MinioBucketWasNotCreatedException.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorMessage handleMinioBucketWasNotCreatedException(MinioBucketWasNotCreatedException e) {
+        return new ErrorMessage(e.getMessage(), new Date());
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorMessage handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
         return new ErrorMessage(e.getMessage(), new Date());
     }
 
