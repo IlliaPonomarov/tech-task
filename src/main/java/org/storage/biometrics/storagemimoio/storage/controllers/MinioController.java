@@ -8,28 +8,21 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.simpleframework.xml.Path;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 import org.storage.biometrics.storagemimoio.auth.exceptions.UserNotFoundException;
 import org.storage.biometrics.storagemimoio.auth.services.UserService;
-import org.storage.biometrics.storagemimoio.storage.dtos.BinaryDownloadResponse;
-import org.storage.biometrics.storagemimoio.storage.dtos.BinaryUploadResponse;
 import org.storage.biometrics.storagemimoio.storage.dtos.InitiateDownloadResponse;
 import org.storage.biometrics.storagemimoio.storage.dtos.InitiateUploadResponse;
 import org.storage.biometrics.storagemimoio.storage.exceptions.MinioBucketNotFoundException;
 import org.storage.biometrics.storagemimoio.storage.services.MinioService;
-import org.storage.biometrics.storagemimoio.utilit.enums.BucketTypes;
 import org.storage.biometrics.storagemimoio.utilit.exceptions.ErrorMessage;
 import org.storage.biometrics.storagemimoio.utilit.validators.annotations.FilenameValid;
-import org.storage.biometrics.storagemimoio.utilit.validators.annotations.PreSignedURLValid;
 import java.util.Optional;
 import org.storage.biometrics.storagemimoio.auth.entities.User;
 
@@ -77,10 +70,9 @@ public class MinioController {
                     String.format("User with username %s not found", user.getUsername()));
         }
 
-        if (minioService.isBucketExists(attachmentType)) {
+        if (minioService.isBucketExists(attachmentType))
             throw new MinioBucketNotFoundException(
                     String.format("Bucket type %s not found", attachmentType));
-        }
 
 
         return Optional.ofNullable(minioService.generatePreSignedUploadUrl(fileName, attachmentType, userOptional.get().getId()))

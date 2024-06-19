@@ -3,10 +3,9 @@
 ## Content
  - [Understand the Requirements](#understand-the-requirements)
  - [Identify Issues](#identify-issues)
- - [Formulate Questions](#formulate-questions)
  - [Design API](#design-api)
- - [Implement API](#implement-api)
  - [Documentation](#documentation)
+ - [Implement API](#implement-api)
 
 ## Understand the Requirements:
 We should design an API that allows integrators to upload and download binary data to and from MinIO.
@@ -75,13 +74,17 @@ CREATE TABLE files_minio (
    Use JWT tokens with pre-signed URLs to authenticate and authorize users. This approach provides a secure and scalable solution but requires token management and validation.<br/>
 
 ### Optimize Database with Indexes<br/>
-  We can optimize the database performance by creating indexes on the columns that are frequently used in queries. By indexing the user ID and file name columns, we can speed up the search and retrieval of file metadata for a specific user.<br/>
+  We can optimize the database performance by creating indexes on the columns that are frequently used in queries. 
+  By indexing the user ID.
   Use case:
-    - When a user requests to download a file, we can quickly retrieve the file metadata by searching for the user ID and file name in the database.<br/>
+    - When a user requests to download a file, we can quickly retrieve the file metadata by searching for the user ID and file name in the database.
 
-### Upload and Download large files<br/>
-  We can configure MinIO to support large file uploads and downloads by setting the appropriate configuration parameters. By increasing the maximum file size and timeout settings, we can handle large files more efficiently and prevent timeouts during file transfers.<br/>
-
+### Use Proxy to restrict number of requests to the our API<br/>
+  We can use a proxy server to restrict the number of requests to the API. By limiting the number of requests per user, we can prevent abuse and ensure fair usage of the API resources.<br/>
+  For example:
+  - We can set a rate limit on the number of requests per user per minute.
+  - If a user exceeds the rate limit, the proxy server can return an error response or block the user from making further requests.
+  - We can use a proxy server like NGINX or HAProxy to implement rate limiting and protect the API from abuse.
 
 ### Use User roles to restrict response data<br/>
 We can use user roles to restrict the data that is returned in the API responses. By associating specific roles with users, we can control the access level of each user and determine which data they are allowed to view or modify.<br/>
@@ -127,3 +130,6 @@ GET /api/v3/minio/initiate/download/{fileName}/{bucketName}
 ## Documentation:
 - You can access the Swagger Specification [here](storage-minio-swagger.yaml)
 - You can use Swagger Editor to view the Swagger Specification [here](https://editor.swagger.io/), just copy and paste the content of the file [storage-minio-swagger.yaml](storage-minio-swagger.yaml) to the editor.
+
+## Implement API
+- You can find the implementation of the API in the [src](src) directory.
