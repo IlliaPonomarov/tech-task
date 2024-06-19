@@ -6,8 +6,8 @@ servers:
   - url: http://localhost:8765
     description: Generated server url
 tags:
-  - name: Minio Storage
-    description: Minio storage operations
+  - name: Minio Pre-signed URLs
+    description: Minio storage operations, generate pre-signed URLs for uploading and downloading files
   - name: Authentication
     description: Authentication operations
 paths:

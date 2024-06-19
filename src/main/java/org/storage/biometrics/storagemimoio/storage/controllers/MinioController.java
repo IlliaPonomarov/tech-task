@@ -28,9 +28,9 @@ import java.util.Optional;
 import org.storage.biometrics.storagemimoio.auth.entities.User;
 
 @RestController
-@RequestMapping("/api/v3/minio")
+@RequestMapping("/api/v3/minio/initiate")
 @Validated
-@Tag(name = "Minio Storage", description = "Minio storage operations")
+@Tag(name = "Minio Storage", description = "Minio storage operations, generate pre-signed URLs for uploading and downloading files")
 public class MinioController {
     private final MinioService minioService;
     private final UserService userService;
@@ -59,7 +59,7 @@ public class MinioController {
             })
     })
     @SecurityRequirement(name = "BearerAuthentication")
-    @GetMapping("/initiate/upload/{fileName}/{attachmentType}")
+    @GetMapping("/upload/{fileName}/{attachmentType}")
     @ResponseStatus(HttpStatus.OK)
     public InitiateUploadResponse initiateUpload(@Valid @FilenameValid @PathVariable String fileName,
                                                  @PathVariable String attachmentType,
@@ -71,7 +71,7 @@ public class MinioController {
                     String.format("User with username %s not found", user.getUsername()));
         }
 
-        if (minioService.isBucketExists(attachmentType))
+        if (!minioService.isBucketExists(attachmentType))
             throw new MinioBucketNotFoundException(
                     String.format("Bucket type %s not found", attachmentType));
 
@@ -100,7 +100,7 @@ public class MinioController {
             })
     })
     @SecurityRequirement(name = "BearerAuthentication")
-    @GetMapping("/initiate/download/{fileName}/{attachmentType}")
+    @GetMapping("/download/{fileName}/{attachmentType}")
     @ResponseStatus(HttpStatus.OK)
     public InitiateDownloadResponse initiateDownload(@Valid @FilenameValid @PathVariable String fileName,
                                                      @PathVariable String attachmentType,

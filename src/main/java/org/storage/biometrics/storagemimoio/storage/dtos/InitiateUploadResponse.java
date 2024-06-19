@@ -1,11 +1,11 @@
 package org.storage.biometrics.storagemimoio.storage.dtos;
 
 import org.storage.biometrics.storagemimoio.utilit.enums.InitiateTypes;
+import java.time.LocalDateTime;
 
-import java.util.Date;
 
 public record InitiateUploadResponse(String preSignedUploadURL,
                                      InitiateTypes types,
-                                     Date expiresAt,
+                                     LocalDateTime expiresAt,
                                      Metadata metadata) {
 }

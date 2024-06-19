@@ -277,6 +277,16 @@ File Example:
 mc alias set myminio http://minio.example.com accesskey secretkey
 mc ilm import myminio/temp temp-lifecycle.json 
 
+# create fingerprint, faces, attachments, videos buckets
+mc mb myminio/fingerprints
+mc mb myminio/faces
+mc mb myminio/attachments
+mc mb myminio/videos
+
+mc ilm import myminio/fingerprints lifecycle-all-buckets.json
+mc ilm import myminio/faces lifecycle-all-buckets.json
+mc ilm import myminio/attachments lifecycle-all-buckets.json
+mc ilm import myminio/videos lifecycle-all-buckets.json
 ```
 
 # Documentation:
