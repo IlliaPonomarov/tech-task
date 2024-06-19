@@ -24,7 +24,7 @@ attachments, videos).
 - If the user has Admin Role, the pre-signed URL should be returned with the bucket name.<br/>
 **Request:**
 ```http request
-GET /api/v3/minio/initiate/upload/{fileName}/{bucketName}
+GET /api/v3/minio/initiate/upload/{fileName}/{attachmentType}
 ```
 
 **Response for User Role:**
@@ -63,7 +63,7 @@ GET /api/v3/minio/initiate/upload/{fileName}/{bucketName}
 
 **Request:**
 ```http request
-GET /api/v3/minio/initiate/download/{fileName}/{bucketName}
+GET /api/v3/minio/initiate/download/{fileName}/{attachmentType}
 ```
 
 **Response for User Role:**
@@ -126,7 +126,7 @@ CREATE TABLE users (
 
 CREATE TABLE fingerprint (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id), -- User who uploaded the fingerprint file
+    user_id INTEGER REFERENCES users(id), 
     fingerprint_name VARCHAR(255) NOT NULL, -- Name of the fingerprint file
     captured_date TIMESTAMP NOT NULL, -- Date when the fingerprint was captured
     fingerprint_quality VARCHAR(50) NOT NULL, -- Quality of the fingerprint data
@@ -136,7 +136,7 @@ CREATE TABLE fingerprint (
 
 CREATE TABLE face (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id), -- User who uploaded the face file
+    user_id INTEGER REFERENCES users(id), 
     face_name VARCHAR(255) NOT NULL, -- Name of the face file
     captured_date TIMESTAMP NOT NULL, -- Date when the face was captured
     face_position VARCHAR(50) NOT NULL, -- Position of the face in the image
@@ -147,9 +147,9 @@ CREATE TABLE face (
 
 CREATE TABLE attachment (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id), -- User who uploaded the attachment file
-    attachment_name VARCHAR(255) NOT NULL, -- Name of the attachment file
-    attachment_type VARCHAR(50) NOT NULL, -- Type of the attachment (e.g., image, document)
+    user_id INTEGER REFERENCES users(id),
+      attachment_name VARCHAR(255) NOT NULL, -- Name of the attachment file
+    attachment_type VARCHAR(50) NOT NULL, -- Type of the attachment 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Creation timestamp
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Last updated timestamp
 );
@@ -186,8 +186,10 @@ CREATE TABLE files_minio (
 If you wanna test the API, you can register a new user and login to get the JWT token.
 ```http request
 POST /api/v3/auth/register
+```
 
 Request Body:
+```json
 {
   "username": "testuser",
   "password": "testpassword"
@@ -416,7 +418,7 @@ mc ilm import myminio/videos lifecycle-all-buckets.json
 - You can use Swagger Editor to view the Swagger Specification [here](https://editor.swagger.io/), just copy and paste the content of the file [storage-minio-swagger.yaml](storage-minio-swagger.yaml) to the editor.
 
 # Implement API
-- You can find the implementation of the API in the [src/main/java/org/storage/biometrics/storagemimoio/storage/controllers](src/main/java/org/storage/biometrics/storagemimoio/storage/controllers) directory.
+- You can find the implementation of the API in the [controllers](src/main/java/org/storage/biometrics/storagemimoio/storage/controllers) directory.
 
 # How to run the project
 - You can run the project using the following steps:
