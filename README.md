@@ -416,7 +416,7 @@ mc ilm import myminio/videos lifecycle-all-buckets.json
 - You can use Swagger Editor to view the Swagger Specification [here](https://editor.swagger.io/), just copy and paste the content of the file [storage-minio-swagger.yaml](storage-minio-swagger.yaml) to the editor.
 
 # Implement API
-- You can find the implementation of the API in the [src](src) directory.
+- You can find the implementation of the API in the [src/main/java/org/storage/biometrics/storagemimoio/storage/controllers](src/main/java/org/storage/biometrics/storagemimoio/storage/controllers) directory.
 
 # How to run the project
 - You can run the project using the following steps:
