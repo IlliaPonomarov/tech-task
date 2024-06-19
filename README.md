@@ -114,7 +114,10 @@ CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(50) NOT NULL,
     password VARCHAR(50) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP
+                
 );
 
 CREATE TABLE files_minio (
@@ -125,7 +128,7 @@ CREATE TABLE files_minio (
     presigned_url VARCHAR(255) NOT NULL, -- Pre-signed URL for file upload/download
     presigned_url_type VARCHAR(50) NOT NULL, -- Type of pre-signed URL (upload/download)
     url_expires_at TIMESTAMP NOT NULL, -- Expiration time for the pre-signed URL
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Creation timestamp
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Last updated timestamp
 );
 ```
@@ -162,6 +165,12 @@ For Example:<br/>
   - To cache we can save pre-signed URL and metadata of the file uploaded to MinIO.<br/>
   - We can use a caching mechanism like Redis to store the pre-signed URLs and metadata in memory for faster access.<br/>
 
+#### How can we determine the pre-signed URL was expired or not, and how can we update our cache ?
+- We can use the expiration time of the pre-signed URL to determine if the URL has expired.
+- When a user requests to upload/download a file, we can check the expiration time of the pre-signed URL in the cache.
+- If the pre-signed URL has expired, we can remove the URL from the cache and generate a new pre-signed URL for the user.
+- We can periodically check the expiration time of the pre-signed URLs in the cache and update the cache with new pre-signed URLs as needed.
+
 ## Minio file LifeCycle Configuration
 - We can use Minio's file life cycle configuration to automatically delete files after a certain period of time. This feature can help manage storage costs and ensure data privacy by removing outdated or unused files from the storage system.<br/>
 
@@ -193,6 +202,8 @@ GET /api/v3/minio/initiate/download/{fileName}/{bucketName}
 manage storage costs and ensure data privacy by removing outdated or unused files from the storage system.<br/>
 
 File Example:
+
+- temp-lifecycle.json 
 ```json
 {
   "Rules": [{
@@ -217,6 +228,24 @@ File Example:
     }
   ]
 }
+```
+
+- lifecycle-all-buckets.json
+```json
+{
+  "Rules": [{
+      "ID": "BucketRule",
+      "Status": "Enabled"
+    }
+  ]
+}
+```
+
+
+```bash
+mc alias set myminio http://minio.example.com accesskey secretkey
+mc ilm import myminio/temp temp-lifecycle.json 
+
 ```
 
 # Documentation:
