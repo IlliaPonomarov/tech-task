@@ -107,6 +107,12 @@ GET /api/v3/minio/initiate/download/{fileName}/{bucketName}
 For example , If we get a fingerprint binary file from the user, we should save the fingerprint file info to the database.
 We can use One-toMany relationship between the user and the file to associate the file with the user.<br/>
 
+#### How Can we associate the fingerprint file with the column from fingerprint table?
+- We can use the user ID to associate the fingerprint file with the user. For example , We can use the user ID as a foreign key in the files_minio table to link the fingerprint file with the user who uploaded the file.
+- If User have relation to the fingerprint column from fingerprint table, we can use the user ID as a foreign key in the fingerprint table to link the fingerprint file with the user who uploaded the file.
+- To get associated fingerprint files for a user, we can query the files_minio table using the user ID to retrieve the fingerprint files uploaded by the user.
+- We can put link to the fingerprint table in the files_minio table to associate the fingerprint file with the user who uploaded the file.
+
 ```postgresql
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
@@ -173,14 +179,6 @@ CREATE TABLE files_minio (
 );
 ```
 
-#### How Can we associate the fingerprint file with the column from fingerprint table?
-- We can use the user ID to associate the fingerprint file with the user. For example , We can use the user ID as a foreign key in the files_minio table to link the fingerprint file with the user who uploaded the file.
-- If User have relation to the fingerprint column from fingerprint table, we can use the user ID as a foreign key in the fingerprint table to link the fingerprint file with the user who uploaded the file.
-- To get associated fingerprint files for a user, we can query the files_minio table using the user ID to retrieve the fingerprint files uploaded by the user.
-- We can put link to the fingerprint table in the files_minio table to associate the fingerprint file with the user who uploaded the file.
-
-
-
 ### Authorization and Authentication<br/>
 - We should secure the API with **JWT** to authenticate users and authorize access to the API endpoints.
 - We should separate the user roles and permissions to control access to the API endpoints and control responses based on the user role.
@@ -223,6 +221,11 @@ Response:
   Use case:
     - When a user requests to download a file, we can quickly retrieve the file metadata by searching for the user ID and file name in the database.
 
+```postgresql
+CREATE INDEX user_id_index ON files_minio(user_id);
+```
+
+
 ### Use Proxy to restrict number of requests to the our API<br/>
   We can use a proxy server to restrict the number of requests to the API. By limiting the number of requests per user, we can prevent abuse and ensure fair usage of the API resources.<br/>
   For example:
@@ -230,26 +233,96 @@ Response:
   - If a user exceeds the rate limit, the proxy server can return an error response or block the user from making further requests.
   - We can use a proxy server like NGINX or HAProxy to implement rate limiting and protect the API from abuse.
 
+```nginx
+http {
+    limit_req_zone $binary_remote_addr zone=mylimit:10m rate=10r/s;
+
+    server {
+        location /api/v3/minio/initiate/upload {
+            limit_req zone=mylimit burst=5 nodelay;
+            proxy_pass http://minio.example.com;
+        },
+        location /api/v3/minio/initiate/download {
+            limit_req zone=mylimit burst=5 nodelay;
+            proxy_pass http://minio.example.com;
+        }
+    }
+}
+```
+
+
+
 ### Use User roles to restrict response data<br/>
 We can use user roles to restrict the data that is returned in the API responses. By associating specific roles with users, we can control the access level of each user and determine which data they are allowed to view or modify.<br/>
 For Example:<br/>
 - **Admin Role**: Full access to all data and API endpoints. ( Upload, Download );
 - **User Role**: Limited access to specific data and API endpoints. ( Download );
 
+
+
 ### Use Caching to Improve Performance<br/>
   To DB We save the metadata of the file uploaded to MinIO.
   We can use caching to improve the performance of database queries by storing frequently accessed data in memory.<br/>
-  For example:
+  Use case:
   - User send request to upload/download file to MinIO, but He send the same of file and bucket name, we can check the cache to see if the file has already been uploaded/downloaded and check the valid of the pre-signed URL.<br/>
   - If pre-signed URL is valid, we can return the pre-signed URL from the cache without querying the database, reducing the response time and database load.<br/>
   - To cache we can save pre-signed URL and metadata of the file uploaded to MinIO.<br/>
   - We can use a caching mechanism like Redis to store the pre-signed URLs and metadata in memory for faster access.<br/>
 
-#### How can we determine the pre-signed URL was expired or not, and how can we update our cache ?
+#### How can we determine at cache that pre-signed URL was expired or not?
 - We can use the expiration time of the pre-signed URL to determine if the URL has expired.
 - When a user requests to upload/download a file, we can check the expiration time of the pre-signed URL in the cache.
 - If the pre-signed URL has expired, we can remove the URL from the cache and generate a new pre-signed URL for the user.
 - We can periodically check the expiration time of the pre-signed URLs in the cache and update the cache with new pre-signed URLs as needed.
+
+If you wanna clean up you cache from the expired pre-signed URL, you can use this bash script on the server, where you have Redis running:
+```bash
+#!/bin/bash
+cleanup_expired_urls() {
+    # Get the current timestamp
+    current_timestamp=$(date +%s)
+
+    # Get all user keys from Redis cache
+    user_keys=$(redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD keys "$CACHE_KEY_PREFIX*")
+
+    # Take each user key and check for expired URLs
+    for key in $user_keys; do
+        # Get all cache objects for the user key
+        cache_objects=$(redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD hgetall "$key")
+
+        # Get all preSignedUrl objects for the user key
+        while IFS= read -r line; do
+            # Check if the line is a preSignedUrl object
+            if [[ "$line" =~ ^preSignedUrl:[0-9]+$ ]]; then
+                # get cache object by key
+                cache_object=$(redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD hget "$key" "$line")
+
+                # parse JSON 
+                expires_at=$(echo "$cache_object" | jq -r '.expiresAt // empty')
+
+                # If the expiresAt field is not empty and the expiration time is less than the current timestamp, delete the expired object
+                if [[ ! -z "$expires_at" && $(date -d "$expires_at" +%s) -lt "$current_timestamp" ]]; then
+                    echo "Removing expired pre-signed URL: $line"
+                    redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD hdel "$key" "$line"
+                fi
+            fi
+        done <<< "$cache_objects"
+    done
+
+    echo "Cleanup completed successfully"
+}
+
+# Call the cleanup_expired_urls function
+cleanup_expired_urls
+```
+- Set up task scheduler to run the script periodically to clean up the cache from expired pre-signed URLs.
+- We should set up a cron job to run the cleanup_expired_urls.sh script every hour to remove expired pre-signed URLs from the cache.
+
+```bash
+# Run the cleanup_expired_urls.sh script every hour
+0 * * * * /path/to/cleanup_expired_urls.sh
+```
+
 
 ## Minio file LifeCycle Configuration
 - We can use Minio's file life cycle configuration to automatically delete files after a certain period of time. This feature can help manage storage costs and ensure data privacy by removing outdated or unused files from the storage system.<br/>

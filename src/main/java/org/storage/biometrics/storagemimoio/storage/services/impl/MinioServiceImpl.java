@@ -26,15 +26,13 @@ import java.util.*;
 public class MinioServiceImpl implements MinioService {
 
     private final MinioClient minioClient;
-    private final RestTemplate restTemplate;
 
     @Value("${minio.expirationTime}")
     private int expirationTime;
 
     @Autowired
-    public MinioServiceImpl(MinioClient minioClient, RestTemplate restTemplate) {
+    public MinioServiceImpl(MinioClient minioClient) {
         this.minioClient = minioClient;
-        this.restTemplate = restTemplate;
     }
 
     @PostConstruct
