@@ -18,4 +18,9 @@ public class UserAdviceController {
     public ErrorMessage userDoesNotExist(UserDoesNotExistException ex) {
         return new ErrorMessage(ex.getMessage(), new Date());
     }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ErrorMessage userNotFound(UserNotFoundException ex) {
+        return new ErrorMessage(ex.getMessage(), new Date());
+    }
 }

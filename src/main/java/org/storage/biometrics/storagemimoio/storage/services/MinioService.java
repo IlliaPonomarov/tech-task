@@ -8,12 +8,9 @@ import org.storage.biometrics.storagemimoio.storage.dtos.InitiateUploadResponse;
 
 public interface MinioService {
 
-    InitiateUploadResponse generatePreSignedUploadUrl(String fileName);
+    InitiateUploadResponse generatePreSignedUploadUrl(final String fileName, final String bucketName, long userId);
 
-    BinaryUploadResponse uploadFile(String preSignedUrl, MultipartFile file);
+    InitiateDownloadResponse generatePreSignedDownloadUrl(final String fileName, final String bucketName, long userId);
 
-
-    InitiateDownloadResponse generatePreSignedDownloadUrl(String fileName);
-
-    BinaryDownloadResponse downloadFile(String preSignedURL);
+    boolean isBucketExists(String bucketName);
 }

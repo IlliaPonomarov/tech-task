@@ -41,4 +41,11 @@ public class MinioControllerAdvice {
     public ErrorMessage handleMinioDownloadException(MinioDownloadException e) {
         return new ErrorMessage(e.getMessage(), new Date());
     }
+
+    @ExceptionHandler(MinioBucketWasNotCreatedException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorMessage handleMinioBucketWasNotCreatedException(MinioBucketWasNotCreatedException e) {
+        return new ErrorMessage(e.getMessage(), new Date());
+    }
+
 }

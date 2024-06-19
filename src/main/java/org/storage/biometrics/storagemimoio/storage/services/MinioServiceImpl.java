@@ -3,6 +3,7 @@ package org.storage.biometrics.storagemimoio.storage.services;
 import io.minio.*;
 import io.minio.errors.*;
 import io.minio.http.Method;
+import jakarta.annotation.PostConstruct;
 import okhttp3.OkHttpClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,6 +15,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
+import org.storage.biometrics.storagemimoio.auth.entities.User;
 import org.storage.biometrics.storagemimoio.storage.dtos.*;
 import org.storage.biometrics.storagemimoio.storage.exceptions.*;
 import org.storage.biometrics.storagemimoio.utilit.enums.BucketTypes;
@@ -22,8 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -42,21 +43,40 @@ public class MinioServiceImpl implements MinioService{
         this.restTemplate = restTemplate;
     }
 
-    @Override
-    public InitiateUploadResponse generatePreSignedUploadUrl(final String objectName) {
-        var bucketName = determineBucketBasedOnFileName(objectName);
-
-        // expiry must be minimum 1 second to maximum 7 days
-        if (expirationTime < 1 || expirationTime > 604800) {
-            throw new ExpirationTimeException("Expiration time must be between 1 second and 7 days");
+    @PostConstruct
+    public void createTempBucket() {
+        try {
+            if (!isBucketExists("temp")) {
+                minioClient.makeBucket(MakeBucketArgs.builder().bucket("temp").build());
+            }
+        } catch (Exception e) {
+            throw new MinioBucketWasNotCreatedException("Error while creating temp bucket");
         }
+    }
+
+    /**
+     * Method to generate pre-signed URL for uploading file to Minio
+     * @param objectName is the name of the file
+     * @param userId -
+     * @return
+     */
+
+    @Override
+    public InitiateUploadResponse generatePreSignedUploadUrl(final String objectName, final String bucketName, long userId) {
+
+
+
 
         try {
-        if (!isBucketExists(bucketName)) {
-            minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
-            throw new MinioBucketNotFoundException(
-                    String.format("Bucket %s not found", bucketName));
-        }
+            if (!isExpirationTimeValid(expirationTime)) {
+                throw new ExpirationTimeException("Expiration time must be between 1 second and 7 days");
+            }
+
+            if (!isBucketExists(bucketName)) {
+                minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
+                throw new MinioBucketNotFoundException(
+                        String.format("Bucket %s not found", bucketName));
+            }
 
             var url = minioClient.getPresignedObjectUrl(
                     GetPresignedObjectUrlArgs.builder()
@@ -67,7 +87,12 @@ public class MinioServiceImpl implements MinioService{
                             .build()
             );
 
-            return new InitiateUploadResponse(url, new Metadata(bucketName, objectName));
+            var expirationDate = new Date(expirationTime);
+
+            // here we should save info about file in database and return
+            //  ...
+
+            return new InitiateUploadResponse(url, new Metadata(UUID.randomUUID(), userId, bucketName, objectName, expirationDate));
 
         } catch (Exception e) {
             throw new InitiatingUploadException(
@@ -75,40 +100,20 @@ public class MinioServiceImpl implements MinioService{
         }
     }
 
-    @Override
-    public BinaryUploadResponse uploadFile(final String preSignedUrl, final MultipartFile file) {
-        var objectName = file.getOriginalFilename();
-        try {
-            var client = new OkHttpClient().newBuilder().build();
-            var mediaType = okhttp3.MediaType.parse("application/octet-stream");
-            var requestBody = okhttp3.RequestBody.create(mediaType, file.getBytes());
-            var request = new okhttp3.Request.Builder()
-                    .url(preSignedUrl)
-                    .method("PUT", requestBody)
-                    .build();
 
-            var response = client.newCall(request).execute();
-
-            if (!response.isSuccessful()) {
-                throw new MinioUploadException("Error while uploading file");
-            }
-
-            return new BinaryUploadResponse(objectName, determineBucketBasedOnFileName(objectName));
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     @Override
-    public InitiateDownloadResponse generatePreSignedDownloadUrl(String fileName) {
-        var bucketName = determineBucketBasedOnFileName(fileName);
+    public InitiateDownloadResponse generatePreSignedDownloadUrl(final String fileName, final String bucketName, long userId) {
 
         try {
             if (!isBucketExists(bucketName)) {
                 minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
                 throw new MinioBucketNotFoundException(
                         String.format("Bucket %s not found", bucketName));
+            }
+
+            if (!isExpirationTimeValid(expirationTime)) {
+                throw new ExpirationTimeException("Expiration time must be between 1 second and 7 days");
             }
 
             var url = minioClient.getPresignedObjectUrl(
@@ -120,7 +125,14 @@ public class MinioServiceImpl implements MinioService{
                             .build()
             );
 
-            return new InitiateDownloadResponse(url, new Metadata(bucketName, fileName));
+            var expirationDate = new Date(expirationTime);
+
+            /*
+             * here we should save info about file in database and return Metadata
+             * ...
+             */
+
+            return new InitiateDownloadResponse(url, new Metadata(UUID.randomUUID(), userId, bucketName, fileName, expirationDate));
 
         } catch (Exception e) {
             throw new InitiatingUploadException(
@@ -128,53 +140,19 @@ public class MinioServiceImpl implements MinioService{
         }
     }
 
-    @Override
-    public BinaryDownloadResponse downloadFile(String preSignedURL) {
-        var client = new OkHttpClient().newBuilder().build();
-        var request = new okhttp3.Request.Builder()
-                .url(preSignedURL)
-                .method("GET", null)
-                .build();
-
-        try {
-            var response = client.newCall(request).execute();
-
-            if (!response.isSuccessful()) {
-                throw new MinioDownloadException("Error while downloading file");
-            }
-
-            Optional<InputStream> inputStream = Optional.ofNullable(response.body()).map(okhttp3.ResponseBody::byteStream);
-
-            if (inputStream.isEmpty() || inputStream.orElseThrow().readAllBytes().length == 0) {
-                throw new MinioDownloadException("Error while downloading file");
-            }
-
-            return new BinaryDownloadResponse(inputStream.orElseThrow().readAllBytes(), true);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private String determineBucketBasedOnFileName(final String fileName) {
-        var buckets = List.of(BucketTypes.values());
-        Predicate<BucketTypes> fileContainsBucketName = bucket -> fileName.contains(bucket.getBucketName());
-        Function<BucketTypes, String> getBucketName = BucketTypes::getBucketName;
-
-        return buckets
-                .stream()
-                .filter(fileContainsBucketName)
-                .map(getBucketName)
-                .findFirst()
-                .orElseThrow(
-                    () -> new MinioBucketNotFoundException(String.format("Bucket for file %s not found", fileName)
-                ));
-    }
-
-    private boolean isBucketExists(final String bucketName) {
+    public boolean isBucketExists(final String bucketName) {
         try {
             return minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
+
+    private boolean isExpirationTimeValid(int expirationTime) {
+        return expirationTime > 0 && expirationTime < 604800;
+    }
+
+
+
+
 }

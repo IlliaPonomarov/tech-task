@@ -6,6 +6,7 @@ import org.storage.biometrics.storagemimoio.auth.repositories.UserRepository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UserService {
@@ -21,5 +22,9 @@ public class UserService {
         userRepository.findAll().forEach(users::add);
 
         return users;
+    }
+
+    public Optional<User> getUserByUsername(String username) {
+        return userRepository.findByUsername(username);
     }
 }

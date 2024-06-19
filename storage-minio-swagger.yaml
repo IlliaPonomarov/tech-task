@@ -1,0 +1,19 @@
+openapi: 3.0.0
+
+info:
+  title: MinIO Storage API
+  description: MinIO Storage API
+  version: 1.0.0
+
+license:
+  name: Apache 2.0
+  url: https://www.apache.org/licenses/LICENSE-2.0.html
+
+servers:
+    - url: http://localhost:8765
+      description: Local server
+tags:
+  - name: minio-storage
+    description: MinIO Storage API
+  - name: authentification
+    description: Authentification API
