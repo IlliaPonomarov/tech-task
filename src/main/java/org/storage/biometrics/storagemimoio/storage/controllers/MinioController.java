@@ -112,7 +112,7 @@ public class MinioController {
                     String.format("User with username %s not found", user.getUsername()));
         }
 
-        if (minioService.isBucketExists(attachmentType)) {
+        if (!minioService.isBucketExists(attachmentType)) {
             throw new MinioBucketNotFoundException(
                     String.format("Bucket type %s not found", attachmentType));
         }
