@@ -302,6 +302,7 @@ mc ilm import myminio/videos lifecycle-all-buckets.json
 ```bash
 git clone https://github.com/IlliaPonomarov/tech-task.git
 cd tech-task
+mvn clean package
 docker-compose up
 ```
 
