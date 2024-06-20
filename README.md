@@ -20,8 +20,8 @@ attachments, videos).
 - The pre-signed URL should be valid for a limited time.
 - The pre-signed URL should be unique for each upload request.
 - The pre-signed URL should be associated with the user, file and bucket name.
-- If the user has User Role, the pre-signed URL should be returned.
-- If the user has Admin Role, the pre-signed URL should be returned with the bucket name.<br/>
+- For Users with User Role or Admin role , can get different response.<br/>
+
 **Request:**
 ```http request
 GET /api/v3/minio/initiate/upload/{fileName}/{attachmentType}
@@ -57,9 +57,10 @@ GET /api/v3/minio/initiate/upload/{fileName}/{attachmentType}
 
 2. Initiate Download:
 - Give the pre-signed URL for downloading binary data from MinIO.
-  - The pre-signed URL should be valid for a limited time.
-  - The pre-signed URL should be unique for each download request and should be associated with the user, file and bucket name.
-  - If the user is authorized to download the file, the pre-signed URL should be returned.
+- The pre-signed URL should be valid for a limited time.
+- The pre-signed URL should be unique for each download request and should be associated with the user, file and bucket name.
+- If the user is authorized to download the file, the pre-signed URL should be returned.
+- For Users with User Role or Admin role , can get different response.<br/>
 
 **Request:**
 ```http request
@@ -319,7 +320,7 @@ cleanup_expired_urls
 ```
 - Set up task scheduler to run the script periodically to clean up the cache from expired pre-signed URLs.
 - We should set up a cron job to run the cleanup_expired_urls.sh script every hour to remove expired pre-signed URLs from the cache.
-
+- cron job is a time-based job scheduler in Unix-like operating systems. It can be used to schedule tasks to run periodically at fixed intervals.
 ```bash
 # Run the cleanup_expired_urls.sh script every hour
 0 * * * * /path/to/cleanup_expired_urls.sh
