@@ -22,6 +22,13 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
+/***
+ * Service class for Minio operations
+ * @version 1.0
+ * @see MinioService
+ * @see MinioClient
+ * @author Illia Ponomarov
+ */
 @Service("minioServiceImpl")
 public class MinioServiceImpl implements MinioService {
 
@@ -76,11 +83,13 @@ public class MinioServiceImpl implements MinioService {
                             .build()
             );
 
-            /// expiration date from now + expirationTime
+            // expiration date from now + expirationTime
             var expireDate = LocalDateTime.now().plusSeconds(expirationTime);
 
-            // here we should save info about file in database and return
-            //  ...
+             /*
+             here we should save info about file in database and return
+                ...
+             */
 
             return new InitiateUploadResponse(url, InitiateTypes.UPLOAD, expireDate, new Metadata(UUID.randomUUID(), bucketName, objectName, new Date(), new Date()));
 
@@ -89,6 +98,14 @@ public class MinioServiceImpl implements MinioService {
                     String.format("Error while %s", e.getMessage()), e);
         }
     }
+
+    /**
+     * Method to generate pre-signed URL for downloading file from Minio
+     * @param fileName - name of the file
+     * @param bucketName - name of the bucket
+     * @param userId - user id who is downloading the file
+     * @return InitiateDownloadResponse - URL and Metadata of the file
+     */
 
 
     @Override
@@ -131,20 +148,18 @@ public class MinioServiceImpl implements MinioService {
 
     public boolean isBucketExists(final String bucketName) {
         try {
-       //     var buckets = List.of(BucketTypes.values());
-
-//            for (var bucket1 : buckets) {
-//                boolean isBucketExists = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
-//                if (!isBucketExists) {
-//                    minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucket1.getBucketName()).build());
-//                }
-//            }
 
             return minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
+
+    /**
+     * Method to check if expiration time is valid
+     * @param expirationTime - time in seconds
+     * @return boolean - true if expiration time is valid
+     */
 
     private boolean isExpirationTimeValid(int expirationTime) {
         return expirationTime > 0 && expirationTime < 604800;

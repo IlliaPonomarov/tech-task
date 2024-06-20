@@ -345,11 +345,11 @@ POST /api/v3/auth/login
 ### Minio Storage Endpoints:
 
 ```http request
-GET /api/v3/minio/initiate/upload/{fileName}/{bucketName}
+GET /api/v3/minio/initiate/upload/{fileName}/{attachmentType}
 ```
 
 ```http request
-GET /api/v3/minio/initiate/download/{fileName}/{bucketName}
+GET /api/v3/minio/initiate/download/{fileName}/{attachmentType}
 ```
 
 ### Remove old object from Minio
