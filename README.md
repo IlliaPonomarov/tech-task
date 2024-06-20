@@ -259,12 +259,9 @@ http {
 
 
 ### Use User roles to restrict response data<br/>
-We can use user roles to restrict the data that is returned in the API responses. By associating specific roles with users, we can control the access level of each user and determine which data they are allowed to view or modify.<br/>
-For Example:<br/>
-- **Admin Role**: Full access to all data and API endpoints. ( Upload, Download );
-- **User Role**: Limited access to specific data and API endpoints. ( Download );
-
-
+We can use user roles to restrict the response data based on the user's role. <br/>
+For example, we can return different response data for users with different roles, such as User and Admin.<br/>
+See [API Functionalities](#api-functionalities) for more details.
 
 ### Use Caching to Improve Performance<br/>
   To DB We save the metadata of the file uploaded to MinIO.
