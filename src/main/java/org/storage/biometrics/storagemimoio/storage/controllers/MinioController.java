@@ -27,6 +27,16 @@ import org.storage.biometrics.storagemimoio.utilit.validators.annotations.Filena
 import java.util.Optional;
 import org.storage.biometrics.storagemimoio.auth.entities.User;
 
+
+/***
+ * Controller class for Minio operations , generate pre-signed URLs for uploading and downloading files
+ * @version 1.0
+ * @see MinioService
+ * @see UserService
+ * @version 1.0
+ * @author Illia Ponomarov
+ */
+
 @RestController
 @RequestMapping("/api/v3/minio/initiate")
 @Validated
@@ -41,6 +51,13 @@ public class MinioController {
         this.userService = userService;
     }
 
+    /***
+     * Method to generate pre-signed URL for uploading file to Minio
+     * @param fileName - name of the file
+     * @param attachmentType - type of the file
+     * @param user - authenticated user
+     * @return - InitiateUploadResponse - URL and Metadata , URL to upload file and metadata of the file
+     */
 
     @Operation(summary = "Initiate upload, get pre-signed URL to upload file")
     @ApiResponses(value = {
@@ -83,6 +100,13 @@ public class MinioController {
                 .orElseThrow(() -> new PreSignedUrlGenerationException("Error while generating presigned URL"));
     }
 
+    /**
+     * Method to generate pre-signed URL for downloading file from Minio
+     * @param fileName - name of the file
+     * @param attachmentType - type of the file
+     * @param user - authenticated user
+     * @return - InitiateDownloadResponse - URL and Metadata , URL to download file and metadata of the file
+     */
 
     @Operation(summary = "Initiate download, get pre-signed URL to download file")
     @ApiResponses(value = {

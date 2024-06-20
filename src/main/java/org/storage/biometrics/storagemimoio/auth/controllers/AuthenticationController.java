@@ -22,6 +22,14 @@ import org.storage.biometrics.storagemimoio.auth.services.JwtService;
 
 import java.util.Optional;
 
+/**
+ * Controller class for authentication operations
+ * @version 1.0
+ * @see AuthenticationService
+ * @see JwtService
+ * @see User
+ * @author Illia Ponomarov
+ */
 
 @RestController
 @RequestMapping("/api/v3/auth")
@@ -35,6 +43,11 @@ public class AuthenticationController {
         this.authenticationService = authenticationService;
     }
 
+    /***
+     * Method to register a new user
+     * @param registerUserDto - user data
+     * @return User - registered user
+     */
     @Operation(summary = "Register a new user")
     @ApiResponses(
             value = {
@@ -54,6 +67,12 @@ public class AuthenticationController {
         return ResponseEntity.ok(registeredUser);
     }
 
+
+    /***
+     * Method to authenticate a user
+     * @param loginUserDto - user data
+     * @return LoginResponse - JWT token
+     */
     @Operation(summary = "Authenticate a user")
     @ApiResponses(
             value = {
