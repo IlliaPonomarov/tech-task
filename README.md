@@ -105,6 +105,7 @@ GET /api/v3/minio/initiate/download/{fileName}/{attachmentType}
 ### Authorization and Authentication<br/>
 - We should secure the API with **JWT** to authenticate users and authorize access to the API endpoints.
 - We should separate the user roles and permissions to control access to the API endpoints and control responses based on the user role.
+- Implementation see [here](src/main/java/org/storage/biometrics/storagemimoio/auth)
   Request Body:
 ```json
 {
