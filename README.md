@@ -101,6 +101,12 @@ GET /api/v3/minio/initiate/download/{fileName}/{attachmentType}
 - We should have endpoints for user registration and authentication.
 - Unauthorized users should not be able to access the API from the Minio Storage API.
 - See [Authorization and Authentication](#authorization-and-authentication) for more details.
+- **pre-signed URL** should be valid for a min 30 minutes:
+   - If We can assume that user can have min 10 mb/s internet speed:
+   - 10 Mbps = 1.25 MB/s -
+   - Time = 2048 MB / 1.25 MB/s = 1638.4 seconds = 27 minutes
+- In the worst case, the user can upload 2 GB file for 30 minutes.
+
 
 ### Authorization and Authentication<br/>
 - We should secure the API with **JWT** to authenticate users and authorize access to the API endpoints.
