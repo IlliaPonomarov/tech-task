@@ -221,7 +221,7 @@ CREATE INDEX idx_user_id ON files_minio (uploaded_user_id);
   For example:
   - We can set a rate limit on the number of requests per user per minute.
   - If a user exceeds the rate limit, the proxy server can return an error response or block the user from making further requests.
-  - We can use a proxy server like NGINX or HAProxy to implement rate limiting and protect the API from abuse.
+  - We can use a proxy server like NGINX  to implement rate limiting and protect the API from abuse.
 
 ```nginx
 http {
