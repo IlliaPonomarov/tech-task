@@ -100,99 +100,12 @@ GET /api/v3/minio/initiate/download/{fileName}/{attachmentType}
 - We should secure the API with JWT.
 - We should have endpoints for user registration and authentication.
 - Unauthorized users should not be able to access the API from the Minio Storage API.
-- We should have a temporary bucket named temp for storing binary data.
-
-## Identify Issues:
-
-### Database Issues<br/>
-For example , If we get a fingerprint binary file from the user, we should save the fingerprint file info to the database.
-We can use One-toMany relationship between the user and the file to associate the file with the user.<br/>
-
-#### How Can we associate the fingerprint file with the column from fingerprint table?
-- We can use the processed_data_user_id column in the fingerprint table to associate the fingerprint file with the user who processed the data.
-- We can use the uploaded_file_user_id column in the fingerprint table to associate the fingerprint file with the user who uploaded the file.
-- If We wanna get info about user who uploaded and processed the file , we can just compare the user_id from the user table with the processed_data_user_id and uploaded_file_user_id from the fingerprint table.
-
-```postgresql
-CREATE TABLE users (
-    id SERIAL PRIMARY KEY,
-    username VARCHAR(50) NOT NULL,
-    password VARCHAR(50) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    deleted_at TIMESTAMP
-                
-);
-
-CREATE TABLE fingerprint (
-    id SERIAL PRIMARY KEY,
-    processed_data_user_id INTEGER REFERENCES users(id),  -- User who processed the fingerprint data
-    uploaded_file_user_id INTEGER REFERENCES users(id), -- User who uploaded the fingerprint file
-    fingerprint_name VARCHAR(255) NOT NULL, -- Name of the fingerprint file
-    captured_date TIMESTAMP NOT NULL, -- Date when the fingerprint was captured
-    fingerprint_quality VARCHAR(50) NOT NULL, -- Quality of the fingerprint data
-    data_quality VARCHAR(50) NOT NULL, -- Quality of the data
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP-- Creation timestamp
-);
-
-CREATE TABLE face (
-    id SERIAL PRIMARY KEY,
-    processed_data_user_id INTEGER REFERENCES users(id),  -- User who processed the fingerprint data
-    uploaded_file_user_id INTEGER REFERENCES users(id), -- User who uploaded the fingerprint file
-    face_name VARCHAR(255) NOT NULL, -- Name of the face file
-    captured_date TIMESTAMP NOT NULL, -- Date when the face was captured
-    face_position VARCHAR(50) NOT NULL, -- Position of the face in the image
-    data_quality VARCHAR(50) NOT NULL, -- Quality of the face data
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Creation timestamp
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Last updated timestamp
-);
-
-CREATE TABLE attachment (
-    id SERIAL PRIMARY KEY,
-    processed_data_user_id INTEGER REFERENCES users(id),  -- User who processed the fingerprint data
-    uploaded_file_user_id INTEGER REFERENCES users(id), -- User who uploaded the fingerprint file
-    attachment_name VARCHAR(255) NOT NULL, -- Name of the attachment file
-    attachment_type VARCHAR(50) NOT NULL, -- Type of the attachment 
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Creation timestamp
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Last updated timestamp
-);
-
-CREATE TABLE video (
-    id SERIAL PRIMARY KEY,
-    processed_data_user_id INTEGER REFERENCES users(id),  -- User who processed the fingerprint data
-    uploaded_file_user_id INTEGER REFERENCES users(id), -- User who uploaded the fingerprint file
-    video_name VARCHAR(255) NOT NULL, -- Name of the video file
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Creation timestamp
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Last updated timestamp
-);
-
-CREATE TABLE files_minio (
-    id SERIAL PRIMARY KEY,
-    uploaded_user_id INTEGER REFERENCES users(id), -- User who uploaded the file
-    file_name VARCHAR(255) NOT NULL, -- Name of the file
-    fingerprint_id INTEGER REFERENCES fingerprint(id), -- Fingerprint ID associated with the file
-    face_id INTEGER REFERENCES face(id), -- Face ID associated with the file
-    attachment_id INTEGER REFERENCES attachment(id), -- Attachment ID associated with the file
-    video_id INTEGER REFERENCES video(id), -- Video ID associated with the file
-    bucket_name VARCHAR(255) NOT NULL, -- Name of the bucket
-    presigned_url VARCHAR(255) NOT NULL, -- Pre-signed URL for file upload/download
-    presigned_url_type VARCHAR(50) NOT NULL, -- Type of pre-signed URL (upload/download)
-    url_expires_at TIMESTAMP NOT NULL, -- Expiration time for the pre-signed URL
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Creation timestamp
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Last updated timestamp
-);
-```
+- See [Authorization and Authentication](#authorization-and-authentication) for more details.
 
 ### Authorization and Authentication<br/>
 - We should secure the API with **JWT** to authenticate users and authorize access to the API endpoints.
 - We should separate the user roles and permissions to control access to the API endpoints and control responses based on the user role.
-
-If you wanna test the API, you can register a new user and login to get the JWT token.
-```http request
-POST /api/v3/auth/register
-```
-
-Request Body:
+  Request Body:
 ```json
 {
   "username": "testuser",
@@ -220,6 +133,76 @@ Response:
 }
 ```
 
+If you wanna test the API, you can register a new user and login to get the JWT token.
+```http request
+POST /api/v3/auth/register
+```
+
+
+## Identify Issues:
+
+### Database Issues<br/>
+For example , If we get a fingerprint binary file from the user, we should save the fingerprint file info to the database.
+We can use One-toMany relationship between the user and the file to associate the file with the user.<br/>
+
+#### How Can we associate the fingerprint file with the column from fingerprint table?
+- Use case:
+We other backend start processing the fingerprint data, we should associate the fingerprint file with the user who processed the data.
+
+##### DB Diagram:
+![DB Diagram](img/db-diagram.png)
+
+
+```postgresql
+CREATE TABLE files_minio (
+                           id SERIAL PRIMARY KEY,
+                           uploaded_user_id INTEGER REFERENCES users(id), -- User who uploaded the file
+                           file_name VARCHAR(255) NOT NULL, -- Name of the file
+                           bucket_name VARCHAR(50) NOT NULL, -- Name of the bucket 
+                           size INTEGER NOT NULL, -- Size of the file in bytes
+                           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Creation timestamp
+                           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Last updated timestamp
+);
+
+CREATE TABLE fingerprint (
+                           id SERIAL PRIMARY KEY,
+                           processed_data_user_id INTEGER REFERENCES users(id),  -- User who processed the fingerprint data
+                           file_id INTEGER REFERENCES files_minio(id) NOT NULL , -- File ID associated with the fingerprint
+                           fingerprint_name VARCHAR(255) NOT NULL, -- Name of the fingerprint file
+                           captured_date TIMESTAMP NOT NULL, -- Date when the fingerprint was captured
+                           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Creation timestamp
+);
+
+CREATE TABLE faces (
+                     id SERIAL PRIMARY KEY,
+                     processed_data_user_id INTEGER REFERENCES users(id),  -- User who processed the fingerprint data
+                     file_id INTEGER REFERENCES files_minio(id) NOT NULL , -- File ID associated with the face
+                     face_name VARCHAR(255) NOT NULL, -- Name of the face file
+                     captured_date TIMESTAMP NOT NULL, -- Date when the face was captured
+                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Creation timestamp
+                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Last updated timestamp
+);
+
+CREATE TABLE attachments (
+                           id SERIAL PRIMARY KEY,
+                           processed_data_user_id INTEGER REFERENCES users(id) NOT NULL ,  -- User who processed the fingerprint data
+                           file_id INTEGER REFERENCES files_minio(id), -- File ID associated with the attachment
+                           attachment_name VARCHAR(255) NOT NULL, -- Name of the attachment file
+                           attachment_type VARCHAR(50) NOT NULL, -- Type of the attachment
+                           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Creation timestamp
+                           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Last updated timestamp
+);
+
+CREATE TABLE videos (
+                      id SERIAL PRIMARY KEY,
+                      processed_data_user_id INTEGER REFERENCES users(id),  -- User who processed the fingerprint data
+                      file_id INTEGER REFERENCES files_minio(id) NOT NULL , -- File ID associated with the video
+                      video_name VARCHAR(255) NOT NULL, -- Name of the video file
+                      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Creation timestamp
+                      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Last updated timestamp
+);
+
+```
 
 ### Optimize Database with Indexes<br/>
   We can optimize the database performance by creating indexes on the columns that are frequently used in queries. 
@@ -228,7 +211,7 @@ Response:
     - When a user requests to download a file, we can quickly retrieve the file metadata by searching for the user ID and file name in the database.
 
 ```postgresql
-CREATE INDEX user_id_index ON files_minio(user_id);
+CREATE INDEX idx_user_id ON files_minio (uploaded_user_id);
 ```
 
 
@@ -255,8 +238,6 @@ http {
     }
 }
 ```
-
-
 
 ### Use User roles to restrict response data<br/>
 We can use user roles to restrict the response data based on the user's role. <br/>
@@ -330,46 +311,16 @@ cleanup_expired_urls
 ## Minio file LifeCycle Configuration
 - We can use Minio's file life cycle configuration to automatically delete files after a certain period of time. This feature can help manage storage costs and ensure data privacy by removing outdated or unused files from the storage system.<br/>
 
-## Design API
-- You can access the Swagger Specification [here](storage-minio-swagger.yaml) to view the API design.
-
-### Authentication Endpoints:
-```http request
-POST /api/v3/auth/register
-```
-register is a optional api for the Test, we can use the default user and password to login.
-
-```http request
-POST /api/v3/auth/login
-```
-
-### Minio Storage Endpoints:
-
-```http request
-GET /api/v3/minio/initiate/upload/{fileName}/{attachmentType}
-```
-
-```http request
-GET /api/v3/minio/initiate/download/{fileName}/{attachmentType}
-```
-
-### Remove old object from Minio
-- We can use Minio's file life cycle configuration to automatically delete files after a certain period of time. This feature can help
-manage storage costs and ensure data privacy by removing outdated or unused files from the storage system.<br/>
-
 File Example:
 
-- temp-lifecycle.json 
+- temp-lifecycle.json
 ```json
 {
   "Rules": [{
       "Expiration": {
         "Date": "2020-01-01T00:00:00.000Z"
       },
-      "ID": "OldPictures",
-      "Filter": {
-        "Prefix": "old/"
-      },
+  
       "Status": "Enabled"
     },
     {
@@ -414,9 +365,17 @@ mc ilm import myminio/attachments lifecycle-all-buckets.json
 mc ilm import myminio/videos lifecycle-all-buckets.json
 ```
 
+### Remove old object from Minio
+- We can use Minio's file life cycle configuration to automatically delete files after a certain period of time. This feature can help
+  manage storage costs and ensure data privacy by removing outdated or unused files from the storage system.<br/>
+
+
+# Design API
+- You can access the Swagger Specification [here](storage-minio-swagger.yaml) to view the API design.
+
 # Documentation:
 - You can access the Swagger Specification [here](storage-minio-swagger.yaml)
-- You can use Swagger Editor to view the Swagger Specification [here](https://editor.swagger.io/), just copy and paste the content of the file [storage-minio-swagger.yaml](storage-minio-swagger.yaml) to the editor.
+- You can use Swagger Editor to view the Swagger Specification at [Swagger Editor](https://editor.swagger.io/), just copy and paste the content of the file [storage-minio-swagger.yaml](storage-minio-swagger.yaml) to the editor.
 
 # Implement API
 - You can find the implementation of the API in the [controllers](src/main/java/org/storage/biometrics/storagemimoio/storage/controllers) directory.
@@ -434,3 +393,4 @@ docker-compose up
 # Docker and Docker-compose
 - You can find the Dockerfile in the [Dockerfile](Dockerfile) file.
 - You can find the docker-compose file in the [docker-compose.yaml](docker-compose.yaml) file.
+
