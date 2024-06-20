@@ -109,10 +109,9 @@ For example , If we get a fingerprint binary file from the user, we should save 
 We can use One-toMany relationship between the user and the file to associate the file with the user.<br/>
 
 #### How Can we associate the fingerprint file with the column from fingerprint table?
-- We can use the user ID to associate the fingerprint file with the user. For example , We can use the user ID as a foreign key in the files_minio table to link the fingerprint file with the user who uploaded the file.
-- If User have relation to the fingerprint column from fingerprint table, we can use the user ID as a foreign key in the fingerprint table to link the fingerprint file with the user who uploaded the file.
-- To get associated fingerprint files for a user, we can query the files_minio table using the user ID to retrieve the fingerprint files uploaded by the user.
-- We can put link to the fingerprint table in the files_minio table to associate the fingerprint file with the user who uploaded the file.
+- We can use the processed_data_user_id column in the fingerprint table to associate the fingerprint file with the user who processed the data.
+- We can use the uploaded_file_user_id column in the fingerprint table to associate the fingerprint file with the user who uploaded the file.
+- If We wanna get info about user who uploaded and processed the file , we can just compare the user_id from the user table with the processed_data_user_id and uploaded_file_user_id from the fingerprint table.
 
 ```postgresql
 CREATE TABLE users (
@@ -127,7 +126,8 @@ CREATE TABLE users (
 
 CREATE TABLE fingerprint (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id), 
+    processed_data_user_id INTEGER REFERENCES users(id),  -- User who processed the fingerprint data
+    uploaded_file_user_id INTEGER REFERENCES users(id), -- User who uploaded the fingerprint file
     fingerprint_name VARCHAR(255) NOT NULL, -- Name of the fingerprint file
     captured_date TIMESTAMP NOT NULL, -- Date when the fingerprint was captured
     fingerprint_quality VARCHAR(50) NOT NULL, -- Quality of the fingerprint data
@@ -137,7 +137,8 @@ CREATE TABLE fingerprint (
 
 CREATE TABLE face (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id), 
+    processed_data_user_id INTEGER REFERENCES users(id),  -- User who processed the fingerprint data
+    uploaded_file_user_id INTEGER REFERENCES users(id), -- User who uploaded the fingerprint file
     face_name VARCHAR(255) NOT NULL, -- Name of the face file
     captured_date TIMESTAMP NOT NULL, -- Date when the face was captured
     face_position VARCHAR(50) NOT NULL, -- Position of the face in the image
@@ -148,8 +149,9 @@ CREATE TABLE face (
 
 CREATE TABLE attachment (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id),
-      attachment_name VARCHAR(255) NOT NULL, -- Name of the attachment file
+    processed_data_user_id INTEGER REFERENCES users(id),  -- User who processed the fingerprint data
+    uploaded_file_user_id INTEGER REFERENCES users(id), -- User who uploaded the fingerprint file
+    attachment_name VARCHAR(255) NOT NULL, -- Name of the attachment file
     attachment_type VARCHAR(50) NOT NULL, -- Type of the attachment 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Creation timestamp
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Last updated timestamp
@@ -157,7 +159,8 @@ CREATE TABLE attachment (
 
 CREATE TABLE video (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id), -- User who uploaded the video file
+    processed_data_user_id INTEGER REFERENCES users(id),  -- User who processed the fingerprint data
+    uploaded_file_user_id INTEGER REFERENCES users(id), -- User who uploaded the fingerprint file
     video_name VARCHAR(255) NOT NULL, -- Name of the video file
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Creation timestamp
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Last updated timestamp
@@ -165,7 +168,7 @@ CREATE TABLE video (
 
 CREATE TABLE files_minio (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id), -- User who uploaded the file
+    uploaded_user_id INTEGER REFERENCES users(id), -- User who uploaded the file
     file_name VARCHAR(255) NOT NULL, -- Name of the file
     fingerprint_id INTEGER REFERENCES fingerprint(id), -- Fingerprint ID associated with the file
     face_id INTEGER REFERENCES face(id), -- Face ID associated with the file
